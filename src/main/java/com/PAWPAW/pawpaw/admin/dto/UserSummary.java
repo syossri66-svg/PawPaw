@@ -1,0 +1,15 @@
+package com.PAWPAW.pawpaw.admin.dto;
+
+import com.PAWPAW.pawpaw.auth.entity.UserRole;
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
+public class UserSummary {
+    private Long id;
+    private String fullName;
+    private String email;
+    private UserRole role;
+    private boolean isVerified;
+    private LocalDateTime createdAt;
+}
