@@ -82,6 +82,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/pets/**").permitAll()
                         .requestMatchers("/api/appointments/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/api/messages/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
