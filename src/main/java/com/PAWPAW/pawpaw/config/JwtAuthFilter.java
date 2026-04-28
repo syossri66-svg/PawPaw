@@ -39,7 +39,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 
         String path = request.getServletPath();
-        if (path.contains("/api/auth")) {
+        if (path.contains("/api/auth") ||
+                path.contains("/api/community") ||
+                path.contains("/api/messages") ||
+                path.contains("/api/groups")) {
+
             filterChain.doFilter(request, response);
             return;
         }
