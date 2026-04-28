@@ -84,6 +84,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/notifications/**").permitAll()
                         .requestMatchers("/api/messages/**").permitAll()
                         .requestMatchers("/api/friends/**").permitAll()
+                        .requestMatchers("/api/groups/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
