@@ -4,6 +4,7 @@ import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -85,6 +86,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/messages/**").permitAll()
                         .requestMatchers("/api/friends/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
