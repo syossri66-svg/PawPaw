@@ -37,7 +37,6 @@ public class SecurityConfig {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -55,15 +54,14 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
-
         configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -75,19 +73,32 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/vets/**").permitAll()
-                        .requestMatchers("/api/community/**").permitAll()
                         .requestMatchers("/api/pets/**").permitAll()
+
+
+                        .requestMatchers(HttpMethod.GET, "/api/community/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/community/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/community/**").permitAll()
+
                         .requestMatchers("/api/appointments/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
                         .requestMatchers("/api/messages/**").permitAll()
                         .requestMatchers("/api/friends/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
+
+
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -98,5 +109,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 }
