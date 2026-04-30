@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public interface AiMessageRepository extends JpaRepository<AiMessage, UUID> {
 
-    List<AiMessage> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    List<AiMessage> findByUser_IdOrderByCreatedAtDesc(UUID userId);
 }
