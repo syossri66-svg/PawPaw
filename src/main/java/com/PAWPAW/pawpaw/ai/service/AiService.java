@@ -2,10 +2,12 @@ package com.PAWPAW.pawpaw.ai.service;
 
 import com.PAWPAW.pawpaw.ai.entity.AiMessage;
 import com.PAWPAW.pawpaw.ai.repository.AiMessageRepository;
-import com.PAWPAW.pawpaw.auth.entity.User; // تأكدي من مسار الـ User عندك
+import com.PAWPAW.pawpaw.auth.entity.User;
 import org.springframework.ai.chat.ChatClient;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AiService {
@@ -13,7 +15,7 @@ public class AiService {
     private final ChatClient chatClient;
     private final AiMessageRepository aiRepository;
 
-    // لازم الـ Constructor يشمل الـ الاثنين مع بعض
+
     public AiService(ChatClient chatClient, AiMessageRepository aiRepository) {
         this.chatClient = chatClient;
         this.aiRepository = aiRepository;
@@ -33,6 +35,10 @@ public class AiService {
         aiRepository.save(aiMessage);
 
         return response;
+    }
+    public List<AiMessage> getUserChatHistory(UUID userId) {
+
+        return aiRepository.findMessagesByUserId(userId);
     }
 
     public String getSymptomAnalysis(String symptoms) {
