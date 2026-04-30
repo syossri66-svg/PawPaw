@@ -2,13 +2,21 @@ package com.PAWPAW.pawpaw.vet.repository;
 
 import com.PAWPAW.pawpaw.vet.entity.VetProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface VetProfileRepository extends JpaRepository<VetProfile, Long> {
-    Optional<VetProfile> findByUserId(Long userId);
+public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> { // تغيير النوع لـ UUID
+
+
+    @Query("SELECT v FROM VetProfile v WHERE v.user.id = :userId")
+    Optional<VetProfile> findByCustomUserId(@Param("userId") Long userId);
+
     List<VetProfile> findByIsApprovedTrue();
+
     List<VetProfile> findBySpecializationContainingIgnoreCase(String specialization);
 }

@@ -47,13 +47,16 @@ public class AdminService {
         userRepository.deleteById(id);
     }
 
-    public UserSummary approveVet(Long userId) {
-        User user = userRepository.findById(userId)
+    public UserSummary approveVet(Long userId) { // 1. تغيير النوع لـ UUID
+        User user = (User) userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        vetProfileRepository.findByUserId(userId).ifPresent(profile -> {
+
+        // 2. استخدام الميثود الجديدة اللي عملناها بالـ @Query
+        vetProfileRepository.findByCustomUserId(userId).ifPresent(profile -> {
             profile.setApproved(true);
             vetProfileRepository.save(profile);
         });
+
         return mapToUserSummary(user);
     }
 

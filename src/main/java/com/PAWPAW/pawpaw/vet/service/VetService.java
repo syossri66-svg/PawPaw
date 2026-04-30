@@ -29,7 +29,8 @@ public class VetService {
     public VetProfileResponse createOrUpdateProfile(VetProfileRequest request) {
         User user = getCurrentUser();
 
-        VetProfile profile = vetProfileRepository.findByUserId(user.getId())
+
+        VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElse(new VetProfile());
 
         profile.setUser(user);
@@ -47,8 +48,11 @@ public class VetService {
 
     public VetProfileResponse getMyProfile() {
         User user = getCurrentUser();
-        VetProfile profile = vetProfileRepository.findByUserId(user.getId())
+
+
+        VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
+
         return mapToResponse(profile);
     }
 
