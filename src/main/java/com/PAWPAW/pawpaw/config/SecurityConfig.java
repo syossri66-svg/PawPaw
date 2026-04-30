@@ -91,6 +91,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/messages/**").permitAll()
                         .requestMatchers("/api/friends/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
+                        .requestMatchers("/api/ai/**").permitAll()
+
 
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
