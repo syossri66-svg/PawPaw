@@ -10,12 +10,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> { // تغيير النوع لـ UUID
+public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> {
+
 
 
     @Query("SELECT v FROM VetProfile v WHERE v.user.id = :userId")
     Optional<VetProfile> findByCustomUserId(@Param("userId") Long userId);
-
     List<VetProfile> findByIsApprovedTrue();
 
     List<VetProfile> findBySpecializationContainingIgnoreCase(String specialization);

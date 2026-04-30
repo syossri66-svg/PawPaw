@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -50,12 +52,10 @@ public class AuthController {
     }
 
     @GetMapping("/profile/{id}")
-    public ResponseEntity<UserResponse> getPublicProfile(@PathVariable java.util.UUID id) {
+    public ResponseEntity<UserResponse> getPublicProfile(@PathVariable Long id) {
+
         return userRepository.findById(id)
-                .map(obj -> {
-                    User user = (User) obj;
-                    return mapToResponse(user);
-                })
+                .map(user -> mapToResponse(user))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
