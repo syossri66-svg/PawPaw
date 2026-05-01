@@ -69,46 +69,35 @@ public class SecurityConfig {
         return source;
     }
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
-            http
-                    .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
 
-                    .csrf(csrf -> csrf.disable())
-                    .authorizeHttpRequests(auth -> auth
-
-                            .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/api/vets/**").permitAll()
-                            .requestMatchers("/api/pets/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
-                            .requestMatchers(HttpMethod.GET, "/api/community/**").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/api/community/**").permitAll()
-                            .requestMatchers(HttpMethod.DELETE, "/api/community/**").permitAll()
-
-                            .requestMatchers("/api/appointments/**").permitAll()
-                            .requestMatchers("/api/notifications/**").permitAll()
-                            .requestMatchers("/api/messages/**").permitAll()
-                            .requestMatchers("/api/friends/**").permitAll()
-                            .requestMatchers("/api/groups/**").permitAll()
-                            .requestMatchers("/api/ai/**").permitAll()
+                        .requestMatchers("/api/ai/**", "/api/vets/**", "/api/appointments/**", "/api/notifications/**").permitAll()
 
 
-
-                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-
-                            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/pets/**", "/api/medical/**").permitAll()
 
 
-                            .anyRequest().authenticated()
-                    )
-                    .sessionManagement(session -> session
-                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    )
-                    .authenticationProvider(authenticationProvider())
-                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        .requestMatchers("/api/community/**", "/api/messages/**", "/api/friends/**", "/api/groups/**").permitAll()
+                        .requestMatchers("/api/profile/**", "/api/dashboard/**").permitAll()
 
-            return http.build();
-        }
+
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 }
