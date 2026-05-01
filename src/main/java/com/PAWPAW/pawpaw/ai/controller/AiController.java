@@ -45,11 +45,13 @@ public class AiController {
         try {
             String message = request.get("description");
 
+            System.out.println("Message received: " + message);
+
             String response = chatModel.call(message);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
 
-            return ResponseEntity.status(503).body("AI Error: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error details: " + e.getMessage());
         }
     }
 
