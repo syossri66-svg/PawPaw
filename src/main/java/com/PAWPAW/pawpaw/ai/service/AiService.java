@@ -22,19 +22,15 @@ public class AiService {
     }
 
     public String getChatResponse(String message, User user) {
-        String response = chatClient.call(message);
+        try {
+            String response = chatClient.call(message);
 
+            return response;
+        } catch (Exception e) {
 
-        AiMessage aiMessage = AiMessage.builder()
-                .userPrompt(message)
-                .aiResponse(response)
-                .createdAt(LocalDateTime.now())
-                .user(user)
-                .build();
-
-        aiRepository.save(aiMessage);
-
-        return response;
+            System.err.println("AI Error: " + e.getMessage());
+            return "Error calling AI: " + e.getMessage();
+        }
     }
     public List<AiMessage> getUserChatHistory(UUID userId) {
 
