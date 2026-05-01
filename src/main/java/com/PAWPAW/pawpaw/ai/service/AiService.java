@@ -29,6 +29,9 @@ public class AiService {
     public Mono<String> getAiResponse(String description) {
         Map<String, Object> body = Map.of(
                 "model", model,
+                "messages", List.of(Map.of("role", "user", "content", description)),
+
+                "model", model,
                 "messages", List.of(Map.of("role", "user", "content", description))
         );
 
