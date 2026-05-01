@@ -3,12 +3,17 @@ package com.PAWPAW.pawpaw.ai.controller;
 import com.PAWPAW.pawpaw.ai.service.AiService;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import org.springframework.ai.chat.model.ChatModel;
+
+
 import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -18,28 +23,34 @@ public class AiController {
     private final UserRepository userRepository;
     private static final Logger logger = LoggerFactory.getLogger(AiController.class);
 
+    // استخدام ChatModel العام لضمان التوافق
+    private final ChatModel chatModel;
 
-    public AiController(AiService aiService, UserRepository userRepository) {
+    public AiController(AiService aiService, UserRepository userRepository, ChatModel chatModel) {
         this.aiService = aiService;
         this.userRepository = userRepository;
+        this.chatModel = chatModel;
     }
 
     @PostMapping("/chat")
     public String chat(@RequestBody String message, Authentication authentication) {
-
         String email = authentication.getName();
-
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-
         return aiService.getChatResponse(message, user);
     }
 
     @PostMapping("/predict")
-    public String predict(@RequestBody String symptoms) {
-        return aiService.getSymptomAnalysis(symptoms);
+    public ResponseEntity<String> predict(@RequestBody Map<String, String> request) {
+        try {
+            String message = request.get("description");
+
+            String response = chatModel.call(message);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+
+            return ResponseEntity.status(503).body("AI Error: " + e.getMessage());
+        }
     }
 
     @PostMapping("/report")
