@@ -11,13 +11,13 @@ import java.util.Map;
 @Service
 public class AiService {
 
-    @Value("${AI_KEY}")
+    @Value("${AI_KEY:dummy_key}")
     private String apiKey;
 
-    @Value("${AI_URL}")
+    @Value("${AI_URL:https://openrouter.ai/api/v1/chat/completions}")
     private String aiUrl;
 
-    @Value("${SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL}")
+    @Value("${SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL:google/gemini-2.0-flash-exp:free}")
     private String model;
 
     private final WebClient webClient;
