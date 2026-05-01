@@ -1,47 +1,44 @@
 package com.PAWPAW.pawpaw.ai.service;
 
-import com.PAWPAW.pawpaw.ai.entity.AiMessage;
-import com.PAWPAW.pawpaw.ai.repository.AiMessageRepository;
-import com.PAWPAW.pawpaw.auth.entity.User;
-import org.springframework.ai.chat.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class AiService {
 
-    private final ChatClient chatClient;
-    private final AiMessageRepository aiRepository;
+    @Value("${AI_KEY}")
+    private String apiKey;
 
+    @Value("${AI_URL}")
+    private String aiUrl;
 
-    public AiService(ChatClient chatClient, AiMessageRepository aiRepository) {
-        this.chatClient = chatClient;
-        this.aiRepository = aiRepository;
+    @Value("${SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL}")
+    private String model;
+
+    private final WebClient webClient;
+
+    public AiService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.build();
     }
 
-    public String getChatResponse(String message, User user) {
-        try {
-            String response = chatClient.call(message);
+    public Mono<String> getAiResponse(String description) {
+        Map<String, Object> body = Map.of(
+                "model", model,
+                "messages", List.of(Map.of("role", "user", "content", description))
+        );
 
-            return response;
-        } catch (Exception e) {
-
-            System.err.println("AI Error: " + e.getMessage());
-            return "Error calling AI: " + e.getMessage();
-        }
-    }
-    public List<AiMessage> getUserChatHistory(UUID userId) {
-
-        return aiRepository.findMessagesByUserId(userId);
-    }
-
-    public String getSymptomAnalysis(String symptoms) {
-        return chatClient.call("You are a professional veterinarian. Analyze: " + symptoms);
-    }
-
-    public String getMedicalReport(String data) {
-        return chatClient.call("Generate a professional medical summary report for: " + data);
+        return webClient.post()
+                .uri(aiUrl)
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(String.class)
+                .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
     }
 }
