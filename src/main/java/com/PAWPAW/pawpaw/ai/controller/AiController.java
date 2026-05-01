@@ -1,69 +1,41 @@
 package com.PAWPAW.pawpaw.ai.controller;
 
-import com.PAWPAW.pawpaw.ai.service.AiService;
-import com.PAWPAW.pawpaw.auth.entity.User;
-import com.PAWPAW.pawpaw.auth.repository.UserRepository;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-
-import org.springframework.security.core.Authentication;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.List;
 import java.util.Map;
-
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {
 
-    private final AiService aiService;
-    private final UserRepository userRepository;
-    private static final Logger logger = LoggerFactory.getLogger(AiController.class);
+    @Value("${spring.ai.openai.api-key}")
+    private String apiKey;
 
-    // استخدام ChatModel العام لضمان التوافق
-    private final ChatModel chatModel;
-
-    public AiController(AiService aiService, UserRepository userRepository, ChatModel chatModel) {
-        this.aiService = aiService;
-        this.userRepository = userRepository;
-        this.chatModel = chatModel;
-    }
-
-    @PostMapping("/chat")
-    public String chat(@RequestBody String message, Authentication authentication) {
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return aiService.getChatResponse(message, user);
-    }
+    // بنعرف الـ builder بس هنا
+    private final WebClient.Builder webClientBuilder = WebClient.builder();
 
     @PostMapping("/predict")
-    public ResponseEntity<String> predict(@RequestBody Map<String, String> request) {
-        try {
-            String message = request.get("description");
+    public Mono<String> predict(@RequestBody Map<String, String> request) {
+        String message = request.get("description");
 
-            System.out.println("Message received: " + message);
+        Map<String, Object> body = Map.of(
+                "model", "google/gemini-2.0-flash-001",
+                "messages", List.of(Map.of("role", "user", "content", message))
+        );
 
-            String response = chatModel.call(message);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-
-            return ResponseEntity.status(500).body("Error details: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/report")
-    public String generateReport(@RequestBody String data) {
-        return aiService.getMedicalReport(data);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleAiException(Exception e) {
-        logger.error("AI Service Error: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("The AI service is currently busy. Please try again later.");
+        return webClientBuilder.build()
+                .post()
+                .uri("https://openrouter.ai/api/v1/chat/completions")
+                .header("Authorization", "Bearer " + apiKey)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(String.class)
+                .onErrorResume(e -> Mono.just("AI Error: " + e.getMessage()));
     }
 }
