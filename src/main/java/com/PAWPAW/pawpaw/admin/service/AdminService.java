@@ -1,6 +1,8 @@
 package com.PAWPAW.pawpaw.admin.service;
 
 import com.PAWPAW.pawpaw.admin.dto.DashboardStats;
+import com.PAWPAW.pawpaw.admin.dto.FlaggedPostResponse;
+import com.PAWPAW.pawpaw.admin.dto.SystemStats;
 import com.PAWPAW.pawpaw.admin.dto.UserSummary;
 import com.PAWPAW.pawpaw.appointment.repository.AppointmentRepository;
 import com.PAWPAW.pawpaw.auth.entity.User;
@@ -116,6 +118,7 @@ public class AdminService {
         summary.setEmail(user.getEmail());
         summary.setRole(user.getRole());
         summary.setVerified(user.isVerified());
+        summary.setBanned(user.isBanned());
         summary.setCreatedAt(user.getCreatedAt());
         return summary;
     }
@@ -135,5 +138,50 @@ public class AdminService {
         response.setLatitude(profile.getLatitude());
         response.setLongitude(profile.getLongitude());
         return response;
+    }
+    public UserSummary unbanUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setBanned(false);
+        return mapToUserSummary(userRepository.save(user));
+    }
+
+    public List<UserSummary> searchUsers(String keyword) {
+        return userRepository.searchUsers(keyword)
+                .stream()
+                .map(this::mapToUserSummary)
+                .collect(Collectors.toList());
+    }
+    public List<FlaggedPostResponse> getAllPosts() {
+        return postRepository.findAll()
+                .stream()
+                .map(this::mapToFlaggedPost)
+                .collect(Collectors.toList());
+    }
+
+    public void deletePost(Long postId) {
+        postRepository.deleteById(postId);
+    }
+
+    private FlaggedPostResponse mapToFlaggedPost(com.PAWPAW.pawpaw.community.entity.Post post) {
+        FlaggedPostResponse response = new FlaggedPostResponse();
+        response.setId(post.getId());
+        response.setContent(post.getContent());
+        response.setImageUrl(post.getImageUrl());
+        response.setUserId(post.getUser().getId());
+        response.setUserName(post.getUser().getFullName());
+        response.setCreatedAt(post.getCreatedAt());
+        return response;
+    }
+    public SystemStats getSystemStats() {
+        SystemStats stats = new SystemStats();
+        stats.setTotalUsers(userRepository.count());
+        stats.setTotalVets(userRepository.countByRole(UserRole.ROLE_VET));
+        stats.setTotalPetOwners(userRepository.countByRole(UserRole.ROLE_PET_OWNER));
+        stats.setTotalPets(petRepository.count());
+        stats.setTotalAppointments(appointmentRepository.count());
+        stats.setTotalPosts(postRepository.count());
+        stats.setStatus("UP");
+        return stats;
     }
 }

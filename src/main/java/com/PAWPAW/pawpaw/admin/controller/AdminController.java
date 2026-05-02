@@ -1,6 +1,8 @@
 package com.PAWPAW.pawpaw.admin.controller;
 
 import com.PAWPAW.pawpaw.admin.dto.DashboardStats;
+import com.PAWPAW.pawpaw.admin.dto.FlaggedPostResponse;
+import com.PAWPAW.pawpaw.admin.dto.SystemStats;
 import com.PAWPAW.pawpaw.admin.dto.UserSummary;
 import com.PAWPAW.pawpaw.admin.service.AdminService;
 import com.PAWPAW.pawpaw.auth.entity.UserRole;
@@ -9,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,5 +72,37 @@ public class AdminController {
     @GetMapping("/vets/stats")
     public ResponseEntity<Map<String, Long>> getVetStats() {
         return ResponseEntity.ok(adminService.getVetStats());
+    }
+    @PutMapping("/users/{id}/unban")
+    public ResponseEntity<UserSummary> unbanUser(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.unbanUser(id));
+    }
+
+    @GetMapping("/users/search")
+    public ResponseEntity<List<UserSummary>> searchUsers(@RequestParam String keyword) {
+        return ResponseEntity.ok(adminService.searchUsers(keyword));
+    }
+    @GetMapping("/posts")
+    public ResponseEntity<List<FlaggedPostResponse>> getAllPosts() {
+        return ResponseEntity.ok(adminService.getAllPosts());
+    }
+
+    @DeleteMapping("/posts/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        adminService.deletePost(id);
+        return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/system/stats")
+    public ResponseEntity<SystemStats> getSystemStats() {
+        return ResponseEntity.ok(adminService.getSystemStats());
+    }
+
+    @GetMapping("/system/health")
+    public ResponseEntity<?> getSystemHealth() {
+        Map<String, String> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("database", "Connected");
+        health.put("version", "1.0.0");
+        return ResponseEntity.ok(health);
     }
 }

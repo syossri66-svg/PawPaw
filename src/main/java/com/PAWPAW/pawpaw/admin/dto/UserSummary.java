@@ -11,5 +11,6 @@ public class UserSummary {
     private String email;
     private UserRole role;
     private boolean isVerified;
+    private boolean isBanned;
     private LocalDateTime createdAt;
 }
