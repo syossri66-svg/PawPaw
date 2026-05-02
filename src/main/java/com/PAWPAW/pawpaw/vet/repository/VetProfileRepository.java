@@ -5,13 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.lang.ScopedValue;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 
 @Repository
-public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> {
+public interface VetProfileRepository extends JpaRepository<VetProfile, Long>{
 
 
 
@@ -26,4 +28,6 @@ public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> {
 
     @Query("SELECT v FROM VetProfile v WHERE v.user.fullName LIKE %:keyword% OR v.licenseNumber LIKE %:keyword%")
     List<VetProfile> searchVets(@Param("keyword") String keyword);
+
+
 }

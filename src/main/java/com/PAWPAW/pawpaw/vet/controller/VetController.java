@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.vet.controller;
 
+import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileRequest;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
 import com.PAWPAW.pawpaw.vet.service.VetService;
@@ -39,4 +40,11 @@ public class VetController {
             @RequestParam String specialization) {
         return ResponseEntity.ok(vetService.searchVetsBySpecialization(specialization));
     }
+    @GetMapping("/dashboard")
+    public ResponseEntity<VetDashboardResponse> getMyDashboard() {
+        return ResponseEntity.ok(vetService.getMyDashboard());
+    }
+
+
+
 }

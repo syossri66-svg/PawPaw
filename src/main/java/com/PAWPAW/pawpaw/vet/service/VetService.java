@@ -1,7 +1,8 @@
 package com.PAWPAW.pawpaw.vet.service;
-
+import org.springframework.security.core.Authentication;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileRequest;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
 import com.PAWPAW.pawpaw.vet.entity.VetProfile;
@@ -86,4 +87,19 @@ public class VetService {
         response.setLongitude(profile.getLongitude());
         return response;
     }
+    public VetDashboardResponse getMyDashboard() {
+        User user = getCurrentUser();
+        VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+        return VetDashboardResponse.builder()
+                .profile(mapToResponse(profile))
+                .totalAppointments(0L)       // هتربطه بالـ appointments لما تعملها
+                .pendingAppointments(0L)     // نفس الكلام
+                .averageRating(0.0)          // لما تعمل ratings
+                .accountStatus(profile.isApproved() ? "APPROVED" : "PENDING")
+                .build();
+    }
+
+
 }
