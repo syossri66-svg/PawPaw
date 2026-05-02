@@ -79,12 +79,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
-                        .requestMatchers("/api/ai/**", "/api/vets/**", "/api/appointments/**", "/api/notifications/**").permitAll()
+                        .requestMatchers("/api/ai/**",  "/api/appointments/**", "/api/notifications/**").permitAll()
 
 
                         .requestMatchers("/api/pets/**", "/api/medical/**").permitAll()
 
-
+                        .requestMatchers("/api/vets/**").authenticated()
                         .requestMatchers("/api/community/**", "/api/messages/**", "/api/friends/**", "/api/groups/**").permitAll()
                         .requestMatchers("/api/profile/**", "/api/dashboard/**").permitAll()
 
