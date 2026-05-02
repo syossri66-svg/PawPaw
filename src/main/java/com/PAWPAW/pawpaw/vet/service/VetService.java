@@ -1,5 +1,5 @@
 package com.PAWPAW.pawpaw.vet.service;
-import org.springframework.security.core.Authentication;
+
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
@@ -94,9 +94,9 @@ public class VetService {
 
         return VetDashboardResponse.builder()
                 .profile(mapToResponse(profile))
-                .totalAppointments(0L)       // هتربطه بالـ appointments لما تعملها
-                .pendingAppointments(0L)     // نفس الكلام
-                .averageRating(0.0)          // لما تعمل ratings
+                .totalAppointments(0L)
+                .pendingAppointments(0L)
+                .averageRating(0.0)
                 .accountStatus(profile.isApproved() ? "APPROVED" : "PENDING")
                 .build();
     }
