@@ -105,4 +105,29 @@ public class AdminController {
         health.put("version", "1.0.0");
         return ResponseEntity.ok(health);
     }
+    @GetMapping("/system/settings")
+    public ResponseEntity<Map<String, Object>> getSystemSettings() {
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("maintenanceMode", false);
+        settings.put("aiModerationLevel", "Medium");
+        settings.put("emailNotifications", true);
+        return ResponseEntity.ok(settings);
+    }
+
+    @PutMapping("/system/settings")
+    public ResponseEntity<Map<String, Object>> updateSystemSettings(
+            @RequestBody Map<String, Object> settings) {
+        return ResponseEntity.ok(settings);
+    }
+
+    @GetMapping("/system/logs")
+    public ResponseEntity<List<Map<String, Object>>> getActivityLogs() {
+        return ResponseEntity.ok(adminService.getActivityLogs());
+    }
+
+    @PutMapping("/posts/{id}/warn")
+    public ResponseEntity<Void> warnUser(@PathVariable Long id) {
+        adminService.warnUserByPost(id);
+        return ResponseEntity.ok().build();
+    }
 }

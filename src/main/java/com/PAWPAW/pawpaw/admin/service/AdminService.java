@@ -184,4 +184,24 @@ public class AdminService {
         stats.setStatus("UP");
         return stats;
     }
+    public List<Map<String, Object>> getActivityLogs() {
+        return postRepository.findAll()
+                .stream()
+                .map(post -> {
+                    Map<String, Object> log = new HashMap<>();
+                    log.put("timestamp", post.getCreatedAt());
+                    log.put("adminName", "System");
+                    log.put("actionType", "POST_CREATED");
+                    log.put("description", "Post by " + post.getUser().getFullName());
+                    log.put("ipAddress", "0.0.0.0");
+                    return log;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public void warnUserByPost(Long postId) {
+        postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+    }
 }
