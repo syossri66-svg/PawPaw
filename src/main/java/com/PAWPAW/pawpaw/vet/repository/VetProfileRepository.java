@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+
 @Repository
 public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> {
 
@@ -21,4 +22,8 @@ public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> {
     List<VetProfile> findBySpecializationContainingIgnoreCase(String specialization);
     long countByIsApprovedTrue();
     long countByIsApprovedFalse();
+    List<VetProfile> findByIsApprovedFalse();
+
+    @Query("SELECT v FROM VetProfile v WHERE v.user.fullName LIKE %:keyword% OR v.licenseNumber LIKE %:keyword%")
+    List<VetProfile> searchVets(@Param("keyword") String keyword);
 }

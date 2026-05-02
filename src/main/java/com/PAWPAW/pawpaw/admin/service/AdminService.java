@@ -8,12 +8,15 @@ import com.PAWPAW.pawpaw.auth.entity.UserRole;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.community.repository.PostRepository;
 import com.PAWPAW.pawpaw.pet.repository.PetRepository;
+import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
 import com.PAWPAW.pawpaw.vet.entity.VetProfile;
 import com.PAWPAW.pawpaw.vet.repository.VetProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,7 +71,7 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         vetProfileRepository.findByCustomUserId(userId).ifPresent(profile -> {
-            profile.setApproved(true);  
+            profile.setApproved(true);
             vetProfileRepository.save(profile);
         });
         return mapToUserSummary(user);
@@ -78,11 +81,32 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         vetProfileRepository.findByCustomUserId(userId).ifPresent(profile -> {
-            profile.setApproved(false);  
+            profile.setApproved(false);
             profile.setRejectionReason(reason);
             vetProfileRepository.save(profile);
         });
         return mapToUserSummary(user);
+    }
+
+    public List<VetProfileResponse> getPendingVets() {
+        return vetProfileRepository.findByIsApprovedFalse()
+                .stream()
+                .map(this::mapToVetResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<VetProfileResponse> searchVets(String keyword) {
+        return vetProfileRepository.searchVets(keyword)
+                .stream()
+                .map(this::mapToVetResponse)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, Long> getVetStats() {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("pending", vetProfileRepository.countByIsApprovedFalse());
+        stats.put("verified", vetProfileRepository.countByIsApprovedTrue());
+        return stats;
     }
 
     private UserSummary mapToUserSummary(User user) {
@@ -94,5 +118,22 @@ public class AdminService {
         summary.setVerified(user.isVerified());
         summary.setCreatedAt(user.getCreatedAt());
         return summary;
+    }
+
+    private VetProfileResponse mapToVetResponse(VetProfile profile) {
+        VetProfileResponse response = new VetProfileResponse();
+        response.setId(profile.getId());
+        response.setUserId(profile.getUser().getId());
+        response.setVetName(profile.getUser().getFullName());
+        response.setClinicName(profile.getClinicName());
+        response.setClinicAddress(profile.getClinicAddress());
+        response.setPhoneNumber(profile.getPhoneNumber());
+        response.setSpecialization(profile.getSpecialization());
+        response.setLicenseNumber(profile.getLicenseNumber());
+        response.setApproved(profile.isApproved());
+        response.setBio(profile.getBio());
+        response.setLatitude(profile.getLatitude());
+        response.setLongitude(profile.getLongitude());
+        return response;
     }
 }

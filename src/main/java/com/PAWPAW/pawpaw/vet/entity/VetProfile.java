@@ -39,4 +39,12 @@ public class VetProfile {
     private Double longitude;
 
     private String rejectionReason;
+
+
+
+    private Integer yearsOfExperience;
+    private String education;
+    private String documentUrl;
+    private String profileImage;
+
 }

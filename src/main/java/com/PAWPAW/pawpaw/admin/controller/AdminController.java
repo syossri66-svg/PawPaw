@@ -4,11 +4,13 @@ import com.PAWPAW.pawpaw.admin.dto.DashboardStats;
 import com.PAWPAW.pawpaw.admin.dto.UserSummary;
 import com.PAWPAW.pawpaw.admin.service.AdminService;
 import com.PAWPAW.pawpaw.auth.entity.UserRole;
+import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -52,5 +54,20 @@ public class AdminController {
     public ResponseEntity<UserSummary> rejectVet(@PathVariable Long userId,
                                                  @RequestParam String reason) {
         return ResponseEntity.ok(adminService.rejectVet(userId, reason));
+    }
+
+    @GetMapping("/vets/pending")
+    public ResponseEntity<List<VetProfileResponse>> getPendingVets() {
+        return ResponseEntity.ok(adminService.getPendingVets());
+    }
+
+    @GetMapping("/vets/search")
+    public ResponseEntity<List<VetProfileResponse>> searchVets(@RequestParam String keyword) {
+        return ResponseEntity.ok(adminService.searchVets(keyword));
+    }
+
+    @GetMapping("/vets/stats")
+    public ResponseEntity<Map<String, Long>> getVetStats() {
+        return ResponseEntity.ok(adminService.getVetStats());
     }
 }
