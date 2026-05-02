@@ -8,6 +8,7 @@ import com.PAWPAW.pawpaw.auth.entity.UserRole;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.community.repository.PostRepository;
 import com.PAWPAW.pawpaw.pet.repository.PetRepository;
+import com.PAWPAW.pawpaw.vet.entity.VetProfile;
 import com.PAWPAW.pawpaw.vet.repository.VetProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class AdminService {
         stats.setTotalPets(petRepository.count());
         stats.setTotalAppointments(appointmentRepository.count());
         stats.setTotalPosts(postRepository.count());
+        stats.setVerifiedVets(vetProfileRepository.countByIsApprovedTrue());
+        stats.setPendingVets(vetProfileRepository.countByIsApprovedFalse());
         return stats;
     }
 
@@ -43,20 +46,42 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserSummary> getUsersByRole(UserRole role) {
+        return userRepository.findByRole(role)
+                .stream()
+                .map(this::mapToUserSummary)
+                .collect(Collectors.toList());
+    }
+
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
 
-    public UserSummary approveVet(Long userId) { // 1. تغيير النوع لـ UUID
-        User user = (User) userRepository.findById(userId)
+    public UserSummary banUser(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setBanned(true);
+        return mapToUserSummary(userRepository.save(user));
+    }
 
-        // 2. استخدام الميثود الجديدة اللي عملناها بالـ @Query
+    public UserSummary approveVet(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         vetProfileRepository.findByCustomUserId(userId).ifPresent(profile -> {
-            profile.setApproved(true);
+            profile.setApproved(true);  
             vetProfileRepository.save(profile);
         });
+        return mapToUserSummary(user);
+    }
 
+    public UserSummary rejectVet(Long userId, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        vetProfileRepository.findByCustomUserId(userId).ifPresent(profile -> {
+            profile.setApproved(false);  
+            profile.setRejectionReason(reason);
+            vetProfileRepository.save(profile);
+        });
         return mapToUserSummary(user);
     }
 

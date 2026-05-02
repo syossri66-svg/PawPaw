@@ -10,4 +10,6 @@ public class DashboardStats {
     private long totalPets;
     private long totalAppointments;
     private long totalPosts;
+    private long verifiedVets;
+    private long pendingVets;
 }

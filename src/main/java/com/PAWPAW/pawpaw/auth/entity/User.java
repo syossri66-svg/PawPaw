@@ -65,4 +65,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() { return true; }
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isBanned = false;
 }

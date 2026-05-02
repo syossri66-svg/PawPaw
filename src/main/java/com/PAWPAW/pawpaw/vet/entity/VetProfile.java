@@ -37,4 +37,6 @@ public class VetProfile {
     private Double latitude;
 
     private Double longitude;
+
+    private String rejectionReason;
 }

@@ -19,4 +19,6 @@ public interface VetProfileRepository extends JpaRepository<VetProfile, UUID> {
     List<VetProfile> findByIsApprovedTrue();
 
     List<VetProfile> findBySpecializationContainingIgnoreCase(String specialization);
+    long countByIsApprovedTrue();
+    long countByIsApprovedFalse();
 }
