@@ -75,30 +75,19 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
-
-
-                        .requestMatchers("/api/ai/**",  "/api/appointments/**", "/api/notifications/**").permitAll()
-
-
-                        .requestMatchers("/api/pets/**", "/api/medical/**").permitAll()
-
+                        .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/api/vets/**").authenticated()
+                        .requestMatchers("/api/appointments/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/pets/**").authenticated()
+                        .requestMatchers("/api/medical/**").authenticated()
                         .requestMatchers("/api/community/**", "/api/messages/**", "/api/friends/**", "/api/groups/**").permitAll()
                         .requestMatchers("/api/profile/**", "/api/dashboard/**").permitAll()
-                        .requestMatchers("/api/appointments/**").authenticated()
-
-
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
                         .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
+                );
         return http.build();
     }
 }
