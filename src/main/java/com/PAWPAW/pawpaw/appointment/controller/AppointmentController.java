@@ -47,4 +47,8 @@ public class AppointmentController {
         appointmentService.cancelAppointment(id);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<AppointmentResponse> confirmAppointment(@PathVariable Long id) {
+        return ResponseEntity.ok(appointmentService.updateStatus(id, AppointmentStatus.CONFIRMED));
+    }
 }

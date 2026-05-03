@@ -87,6 +87,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/vets/**").authenticated()
                         .requestMatchers("/api/community/**", "/api/messages/**", "/api/friends/**", "/api/groups/**").permitAll()
                         .requestMatchers("/api/profile/**", "/api/dashboard/**").permitAll()
+                        .requestMatchers("/api/appointments/**").authenticated()
 
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
