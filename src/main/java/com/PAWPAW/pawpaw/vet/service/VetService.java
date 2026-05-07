@@ -1,5 +1,7 @@
 package com.PAWPAW.pawpaw.vet.service;
 
+import com.PAWPAW.pawpaw.appointment.entity.AppointmentStatus;
+import com.PAWPAW.pawpaw.appointment.repository.AppointmentRepository;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
@@ -20,6 +22,8 @@ public class VetService {
 
     private final VetProfileRepository vetProfileRepository;
     private final UserRepository userRepository;
+    private final AppointmentRepository appointmentRepository;
+
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -92,12 +96,19 @@ public class VetService {
         VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
+        long totalAppointments = appointmentRepository.countByVetId(user.getId());
+        long pendingAppointments = appointmentRepository.countByVetIdAndStatus(user.getId(), AppointmentStatus.PENDING);
+        long completedAppointments = appointmentRepository.countByVetIdAndStatus(user.getId(), AppointmentStatus.COMPLETED);
+
         return VetDashboardResponse.builder()
                 .profile(mapToResponse(profile))
-                .totalAppointments(0L)
-                .pendingAppointments(0L)
+                .totalAppointments(totalAppointments)
+                .pendingAppointments(pendingAppointments)
                 .averageRating(0.0)
                 .accountStatus(profile.isApproved() ? "APPROVED" : "PENDING")
+                .consultationsComplete(completedAppointments)
+                .newPatientsThisMonth(0L)
+                .aiDiagnosisTimes(0L)
                 .build();
     }
 

@@ -15,4 +15,7 @@ public class VetDashboardResponse {
     private long pendingAppointments;
     private double averageRating;
     private String accountStatus;
+    private long consultationsComplete;
+    private long newPatientsThisMonth;
+    private long aiDiagnosisTimes;
 }
