@@ -36,4 +36,14 @@ public class FriendController {
     public ResponseEntity<List<FriendResponse>> getMyFriends() {
         return ResponseEntity.ok(friendService.getMyFriends());
     }
+    @GetMapping("/suggestions")
+    public ResponseEntity<?> getSuggestions() {
+        return ResponseEntity.ok(friendService.getSuggestions());
+    }
+
+    @DeleteMapping("/{friendId}")
+    public ResponseEntity<Void> removeFriend(@PathVariable Long friendId) {
+        friendService.removeFriend(friendId);
+        return ResponseEntity.noContent().build();
+    }
 }

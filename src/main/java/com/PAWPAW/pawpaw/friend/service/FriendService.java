@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,5 +72,23 @@ public class FriendService {
         response.setReceiverName(friend.getReceiver().getFullName());
         response.setStatus(friend.getStatus());
         return response;
+    }
+    public List<Map<String, Object>> getSuggestions() {
+        User user = getCurrentUser();
+        return friendRepository.findSuggestions(user.getId())
+                .stream()
+                .map(u -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", u.getId());
+                    map.put("name", u.getFullName());
+                    map.put("avatar", null);
+                    map.put("mutual", 0);
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public void removeFriend(Long friendId) {
+        friendRepository.deleteById(friendId);
     }
 }
