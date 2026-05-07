@@ -35,6 +35,7 @@ public class VetService {
         User user = getCurrentUser();
 
 
+
         VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElse(new VetProfile());
 
@@ -47,6 +48,7 @@ public class VetService {
         profile.setBio(request.getBio());
         profile.setLatitude(request.getLatitude());
         profile.setLongitude(request.getLongitude());
+        profile.setYearsOfExperience(request.getYearsOfExperience());
 
         return mapToResponse(vetProfileRepository.save(profile));
     }
@@ -89,6 +91,7 @@ public class VetService {
         response.setBio(profile.getBio());
         response.setLatitude(profile.getLatitude());
         response.setLongitude(profile.getLongitude());
+        response.setYearsOfExperience(profile.getYearsOfExperience());
         return response;
     }
     public VetDashboardResponse getMyDashboard() {

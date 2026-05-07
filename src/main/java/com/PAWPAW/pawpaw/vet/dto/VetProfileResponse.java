@@ -16,4 +16,6 @@ public class VetProfileResponse {
     private String bio;
     private Double latitude;
     private Double longitude;
+    private Integer yearsOfExperience;
+    private long totalPatients;
 }

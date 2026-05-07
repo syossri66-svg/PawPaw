@@ -24,4 +24,6 @@ public class VetProfileRequest {
     private Double latitude;
 
     private Double longitude;
+
+    private Integer yearsOfExperience;
 }
