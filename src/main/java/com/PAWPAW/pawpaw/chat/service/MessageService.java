@@ -74,21 +74,24 @@ public class MessageService {
     }
 
     public List<ConversationResponse> getMyConversations() {
-        // 1. الحصول على إيميل اليوزر اللي مسجل دخول حالياً
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        // استخدمي الطريقة دي عشان نضمن إننا بنجيب اليوزر الصح من غير تضارب
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String email;
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            email = ((org.springframework.security.core.userdetails.UserDetails)principal).getUsername();
+        } else {
+            email = principal.toString();
+        }
 
-        // 2. البحث عن اليوزر في الداتابيز باستخدام الـ UserRepository اللي عندك
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Long currentUserId = currentUser.getId();
 
-        // 3. جلب آخر الرسائل للمستخدم
+        // نداء الـ Repository اللي لسه مصلحينه
         List<Message> messages = messageRepository.findLastMessagesForUser(currentUserId);
 
-        // 4. تحويل الرسائل لـ ConversationResponse
         return messages.stream().map(msg -> {
-            // تحديد الطرف التاني في المحادثة
             User partner = msg.getSender().getId().equals(currentUserId)
                     ? msg.getReceiver()
                     : msg.getSender();
@@ -96,10 +99,9 @@ public class MessageService {
             return ConversationResponse.builder()
                     .conversationId(partner.getId())
                     .participantName(partner.getFullName())
-                    // لو اسم الحقل عندك مختلف عن profilePicture (مثلاً avatarUrl) غيريه هنا
                     .avatar(partner.getProfilePicture())
                     .lastMessage(msg.getContent())
-                    .unreadCount(0)
+                    .unreadCount(0) // ممكن نطورها لاحقاً
                     .isOnline(false)
                     .build();
         }).collect(Collectors.toList());
