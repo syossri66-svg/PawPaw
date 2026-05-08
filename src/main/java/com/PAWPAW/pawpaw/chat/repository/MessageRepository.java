@@ -18,9 +18,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     long countBySenderIdAndReceiverIdAndIsReadFalse(Long senderId, Long receiverId);
 
-    @Query("SELECT m FROM Message m WHERE m.id IN (" +
-            "SELECT MAX(m2.id) FROM Message m2 " +
-            "WHERE m2.sender.id = :userId OR m2.receiver.id = :userId " +
-            "GROUP BY (CASE WHEN m2.sender.id = :userId THEN m2.receiver.id ELSE m2.sender.id END))")
+    @Query(value = "SELECT * FROM messages WHERE id IN (" +
+            "SELECT MAX(id) FROM messages " +
+            "WHERE sender_id = :userId OR receiver_id = :userId " +
+            "GROUP BY LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id)) " +
+            "ORDER BY created_at DESC", nativeQuery = true)
     List<Message> findLastMessagesForUser(@Param("userId") Long userId);
 }
