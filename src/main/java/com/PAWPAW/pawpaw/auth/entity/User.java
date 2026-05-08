@@ -68,4 +68,9 @@ public class User implements UserDetails {
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isBanned = false;
+
+    private String bio;
+    private String avatarUrl;
+    private String coverUrl;
+    private String location;
 }

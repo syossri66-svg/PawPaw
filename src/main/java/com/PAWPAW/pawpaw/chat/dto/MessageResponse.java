@@ -7,10 +7,7 @@ import java.time.LocalDateTime;
 public class MessageResponse {
     private Long id;
     private Long senderId;
-    private String senderName;
-    private Long receiverId;
-    private String receiverName;
-    private String content;
-    private boolean isRead;
-    private LocalDateTime createdAt;
+    private String text;
+    private LocalDateTime timestamp;
+    private String status;
 }

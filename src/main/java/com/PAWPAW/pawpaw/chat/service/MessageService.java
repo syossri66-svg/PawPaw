@@ -2,6 +2,7 @@ package com.PAWPAW.pawpaw.chat.service;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import com.PAWPAW.pawpaw.chat.dto.ConversationResponse;
 import com.PAWPAW.pawpaw.chat.dto.MessageRequest;
 import com.PAWPAW.pawpaw.chat.dto.MessageResponse;
 import com.PAWPAW.pawpaw.chat.entity.Message;
@@ -77,16 +78,42 @@ public class MessageService {
         return messageRepository.countBySenderIdAndReceiverIdAndIsReadFalse(senderId, currentUser.getId());
     }
 
+    // ميثود تحويل الرسالة لشكل الـ Response الجديد
     private MessageResponse mapToResponse(Message message) {
         MessageResponse response = new MessageResponse();
         response.setId(message.getId());
         response.setSenderId(message.getSender().getId());
-        response.setSenderName(message.getSender().getFullName());
-        response.setReceiverId(message.getReceiver().getId());
-        response.setReceiverName(message.getReceiver().getFullName());
-        response.setContent(message.getContent());
-        response.setRead(message.isRead());
-        response.setCreatedAt(message.getCreatedAt());
+        response.setText(message.getContent()); // تحويل content لـ text
+        response.setTimestamp(message.getCreatedAt()); // تحويل createdAt لـ timestamp
+        response.setStatus(message.isRead() ? "seen" : "sent"); // تحويل boolean لـ String
         return response;
+    }
+
+    // ميثود تجيب كل المحادثات بالتفاصيل اللي الفرونت عايزاها
+    public List<ConversationResponse> getMyConversations() {
+        User currentUser = getCurrentUser();
+
+        // بنجيب كل الناس اللي بعتنا لهم أو بعتوا لنا
+        return messageRepository.findChatPartners(currentUser.getId())
+                .stream()
+                .map(obj -> {
+                    User partner = (User) obj;
+                    // بنجيب آخر رسالة بيني وبين الشخص ده
+                    List<Message> conv = messageRepository.findConversation(currentUser.getId(), partner.getId());
+                    Message lastMsg = conv.get(conv.size() - 1);
+
+                    // بنحسب عدد الرسائل اللي الشخص ده بعتها لي وأنا لسه مقرتهاش
+                    long unread = messageRepository.countBySenderIdAndReceiverIdAndIsReadFalse(partner.getId(), currentUser.getId());
+
+                    return ConversationResponse.builder()
+                            .conversationId(partner.getId())
+                            .participantName(partner.getFullName())
+                            .avatar(partner.getProfilePicture()) // تأكدي إن عندك الحقل ده في موديل الـ User
+                            .lastMessage(lastMsg.getContent())
+                            .unreadCount(unread)
+                            .isOnline(false) // دي ممكن تتظبط لاحقاً مع الـ Sockets
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

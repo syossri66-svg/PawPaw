@@ -1,15 +1,10 @@
 package com.PAWPAW.pawpaw.auth.dto;
 
-import com.PAWPAW.pawpaw.auth.entity.UserRole;
 import lombok.Data;
 
 @Data
-public class UserResponse {
-    private Long id;
+public class UpdateProfileRequest {
     private String fullName;
-    private String email;
-    private UserRole role;
-    private boolean isVerified;
     private String bio;
     private String avatarUrl;
     private String coverUrl;

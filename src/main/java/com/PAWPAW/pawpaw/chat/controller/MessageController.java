@@ -36,4 +36,17 @@ public class MessageController {
     public ResponseEntity<Long> getUnreadCount(@PathVariable Long senderId) {
         return ResponseEntity.ok(messageService.getUnreadCount(senderId));
     }
+    // مسح رسالة معينة
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
+        messageService.deleteMessage(id); // هتحتاجي تضيفي الميثود دي في الـ Service
+        return ResponseEntity.noContent().build();
+    }
+
+    // تغيير حالة المحادثة كلها لـ "Seen"
+    @PatchMapping("/read/{conversationId}")
+    public ResponseEntity<Void> markAsSeen(@PathVariable Long conversationId) {
+        messageService.markConversationAsRead(conversationId); // هتحتاجي تضيفيها في الـ Service
+        return ResponseEntity.ok().build();
+    }
 }
