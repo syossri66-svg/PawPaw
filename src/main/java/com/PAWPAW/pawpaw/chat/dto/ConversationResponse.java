@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
+
 public class ConversationResponse {
     private Long conversationId;
     private String participantName;
