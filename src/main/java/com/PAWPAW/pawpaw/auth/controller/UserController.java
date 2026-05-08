@@ -3,7 +3,6 @@ package com.PAWPAW.pawpaw.auth.controller;
 import com.PAWPAW.pawpaw.auth.dto.UserStatsResponse;
 import com.PAWPAW.pawpaw.auth.service.UserService;
 import com.PAWPAW.pawpaw.community.dto.PostResponse;
-import com.PAWPAW.pawpaw.community.repository.PostRepository;
 import com.PAWPAW.pawpaw.community.service.CommunityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
