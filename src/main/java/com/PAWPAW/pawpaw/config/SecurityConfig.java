@@ -77,12 +77,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
-                        .requestMatchers("/api/vets/**").authenticated()
-                        .requestMatchers("/api/appointments/**").authenticated()
-                        .requestMatchers("/api/notifications/**").authenticated()
-                        .requestMatchers("/api/pets/**").authenticated()
-                        .requestMatchers("/api/medical/**").authenticated()
-                        .requestMatchers("/api/community/**", "/api/messages/**", "/api/friends/**", "/api/groups/**").authenticated()                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/friends/**", "/api/groups/**").authenticated()
+                        .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
