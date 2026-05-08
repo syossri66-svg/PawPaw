@@ -29,8 +29,8 @@ public class MessageController {
     }
 
     @GetMapping("/conversations")
-    public ResponseEntity<List<ConversationResponse>> getMyConversations() {
-        return ResponseEntity.ok(messageService.getMyConversations());
+    public ResponseEntity<?> test() {
+        return ResponseEntity.ok("Link is working!");
     }
 
     @GetMapping("/unread/{senderId}")
