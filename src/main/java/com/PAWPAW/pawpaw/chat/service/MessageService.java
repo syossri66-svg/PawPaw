@@ -1,5 +1,4 @@
 package com.PAWPAW.pawpaw.chat.service;
-
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.chat.dto.ConversationResponse;
@@ -8,8 +7,10 @@ import com.PAWPAW.pawpaw.chat.dto.MessageResponse;
 import com.PAWPAW.pawpaw.chat.entity.Message;
 import com.PAWPAW.pawpaw.chat.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,36 +74,33 @@ public class MessageService {
         return response;
     }
 
+
+    @Transactional(readOnly = true)
     public List<ConversationResponse> getMyConversations() {
-        // استخدمي الطريقة دي عشان نضمن إننا بنجيب اليوزر الصح من غير تضارب
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String email;
-        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-            email = ((org.springframework.security.core.userdetails.UserDetails)principal).getUsername();
-        } else {
-            email = principal.toString();
-        }
-
-        User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        // 1. نجيب اليوزر الحالي
+        User currentUser = getCurrentUser();
         Long currentUserId = currentUser.getId();
 
-        // نداء الـ Repository اللي لسه مصلحينه
+        // 2. نجيب لستة آخر الرسائل من الريبوزيتوري
         List<Message> messages = messageRepository.findLastMessagesForUser(currentUserId);
 
+        // 3. نحول الرسائل لـ Responses
         return messages.stream().map(msg -> {
-            User partner = msg.getSender().getId().equals(currentUserId)
-                    ? msg.getReceiver()
-                    : msg.getSender();
+            // نحدد الطرف التاني (لو أنا الراسل يبقى هو المستقبل، والعكس)
+            User partner;
+            if (msg.getSender().getId().equals(currentUserId)) {
+                partner = msg.getReceiver();
+            } else {
+                partner = msg.getSender();
+            }
 
+            // بناء الرد
             return ConversationResponse.builder()
                     .conversationId(partner.getId())
-                    .participantName(partner.getFullName())
+                    .participantName(partner.getFullName() != null ? partner.getFullName() : "PawPaw User")
                     .avatar(partner.getProfilePicture())
                     .lastMessage(msg.getContent())
-                    .unreadCount(0) // ممكن نطورها لاحقاً
-                    .isOnline(false)
+                    .unreadCount(0)
                     .build();
         }).collect(Collectors.toList());
     }
