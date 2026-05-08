@@ -94,17 +94,18 @@ public class MessageService {
                 partner = msg.getSender();
             }
 
-            // بناء الرد
+
+
             return ConversationResponse.builder()
                     .conversationId(partner.getId())
                     .participantName(partner.getFullName() != null ? partner.getFullName() : "PawPaw User")
-                    .avatar(partner.getProfilePicture())
+                    .avatar(partner.getAvatarUrl()) // خليها avatarUrl بدل profilePicture
                     .lastMessage(msg.getContent())
                     .unreadCount(0)
                     .build();
         }).collect(Collectors.toList());
     }
-    // 1. ميثود مسح الرسالة
+
     public void deleteMessage(Long messageId) {
         User currentUser = getCurrentUser();
         Message message = messageRepository.findById(messageId)

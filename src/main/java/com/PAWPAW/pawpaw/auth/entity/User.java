@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.auth.entity;
 
+import com.PAWPAW.pawpaw.chat.entity.Message;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,6 +40,7 @@ public class User implements UserDetails {
 
     private LocalDateTime createdAt;
 
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
@@ -73,8 +75,9 @@ public class User implements UserDetails {
     private String avatarUrl;
     private String coverUrl;
     private String location;
+    @OneToMany(mappedBy = "sender")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<Message> sentMessages;
 
-    public String getProfilePicture() {
-        return getProfilePicture();
-    }
+
 }
