@@ -73,33 +73,36 @@ public class MessageService {
         return response;
     }
 
-    // دي الميثود اللي سيبناها عشان الفرونت محتاجها
     public List<ConversationResponse> getMyConversations() {
-        User currentUser = getCurrentUser();
+        // 1. الحصول على إيميل اليوزر اللي مسجل دخول حالياً
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        return messageRepository.findChatPartners(currentUser.getId())
-                .stream()
-                .map(obj -> {
-                    User partner = (User) obj;
-                    List<Message> conv = messageRepository.findConversation(currentUser.getId(), partner.getId());
+        // 2. البحث عن اليوزر في الداتابيز باستخدام الـ UserRepository اللي عندك
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-                    // تأمين الكود لو مفيش رسايل خالص
-                    if (conv.isEmpty()) return null;
+        Long currentUserId = currentUser.getId();
 
-                    Message lastMsg = conv.get(conv.size() - 1);
-                    long unread = messageRepository.countBySenderIdAndReceiverIdAndIsReadFalse(partner.getId(), currentUser.getId());
+        // 3. جلب آخر الرسائل للمستخدم
+        List<Message> messages = messageRepository.findLastMessagesForUser(currentUserId);
 
-                    return ConversationResponse.builder()
-                            .conversationId(partner.getId())
-                            .participantName(partner.getFullName())
-                            .avatar(partner.getProfilePicture())
-                            .lastMessage(lastMsg.getContent())
-                            .unreadCount(unread)
-                            .isOnline(false)
-                            .build();
-                })
-                .filter(c -> c != null)
-                .collect(Collectors.toList());
+        // 4. تحويل الرسائل لـ ConversationResponse
+        return messages.stream().map(msg -> {
+            // تحديد الطرف التاني في المحادثة
+            User partner = msg.getSender().getId().equals(currentUserId)
+                    ? msg.getReceiver()
+                    : msg.getSender();
+
+            return ConversationResponse.builder()
+                    .conversationId(partner.getId())
+                    .participantName(partner.getFullName())
+                    // لو اسم الحقل عندك مختلف عن profilePicture (مثلاً avatarUrl) غيريه هنا
+                    .avatar(partner.getProfilePicture())
+                    .lastMessage(msg.getContent())
+                    .unreadCount(0)
+                    .isOnline(false)
+                    .build();
+        }).collect(Collectors.toList());
     }
     // 1. ميثود مسح الرسالة
     public void deleteMessage(Long messageId) {
