@@ -1,0 +1,41 @@
+package com.PAWPAW.pawpaw.auth.controller;
+
+import com.PAWPAW.pawpaw.auth.dto.UserStatsResponse;
+import com.PAWPAW.pawpaw.auth.service.UserService;
+import com.PAWPAW.pawpaw.community.dto.PostResponse;
+import com.PAWPAW.pawpaw.community.repository.PostRepository;
+import com.PAWPAW.pawpaw.community.service.CommunityService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+    private final CommunityService communityService;
+
+    @GetMapping("/stats/{id}")
+    public ResponseEntity<UserStatsResponse> getStats(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserStats(id));
+    }
+
+    @PostMapping("/follow/{id}")
+    public ResponseEntity<Map<String, String>> toggleFollow(@PathVariable Long id) {
+        return ResponseEntity.ok(Map.of("status", userService.toggleFollow(id)));
+    }
+
+    @GetMapping("/is-following/{id}")
+    public ResponseEntity<Map<String, Boolean>> isFollowing(@PathVariable Long id) {
+        return ResponseEntity.ok(Map.of("following", userService.isFollowing(id)));
+    }
+
+    @GetMapping("/posts/{id}")
+    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long id) {
+        return ResponseEntity.ok(communityService.getPostsByUser(id));
+    }
+}

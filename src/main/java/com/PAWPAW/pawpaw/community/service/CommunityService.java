@@ -118,4 +118,8 @@ public class CommunityService {
         response.setCreatedAt(comment.getCreatedAt());
         return response;
     }
+    public List<PostResponse> getPostsByUser(Long userId) {
+        return postRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream().map(this::mapToPostResponse).collect(Collectors.toList());
+    }
 }
