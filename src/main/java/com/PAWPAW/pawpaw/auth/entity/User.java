@@ -73,4 +73,8 @@ public class User implements UserDetails {
     private String avatarUrl;
     private String coverUrl;
     private String location;
+
+    public String getProfilePicture() {
+        return getProfilePicture();
+    }
 }

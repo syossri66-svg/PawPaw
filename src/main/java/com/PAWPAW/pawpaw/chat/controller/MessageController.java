@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.chat.controller;
 
+import com.PAWPAW.pawpaw.chat.dto.ConversationResponse;
 import com.PAWPAW.pawpaw.chat.dto.MessageRequest;
 import com.PAWPAW.pawpaw.chat.dto.MessageResponse;
 import com.PAWPAW.pawpaw.chat.service.MessageService;
@@ -28,7 +29,7 @@ public class MessageController {
     }
 
     @GetMapping("/conversations")
-    public ResponseEntity<List<MessageResponse>> getMyConversations() {
+    public ResponseEntity<List<ConversationResponse>> getMyConversations() {
         return ResponseEntity.ok(messageService.getMyConversations());
     }
 
