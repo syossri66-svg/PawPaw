@@ -79,5 +79,4 @@ public class User implements UserDetails {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Message> sentMessages;
 
-
 }

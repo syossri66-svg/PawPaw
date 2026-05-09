@@ -1,5 +1,9 @@
 package com.PAWPAW.pawpaw.auth.controller;
-
+import com.PAWPAW.pawpaw.auth.dto.UpdateProfileRequest;
+import com.PAWPAW.pawpaw.auth.dto.UserResponse;
+import com.PAWPAW.pawpaw.auth.entity.User;
+import com.PAWPAW.pawpaw.auth.service.AuthService;
+import org.springframework.security.core.Authentication;
 import com.PAWPAW.pawpaw.auth.dto.UserStatsResponse;
 import com.PAWPAW.pawpaw.auth.service.UserService;
 import com.PAWPAW.pawpaw.community.dto.PostResponse;
@@ -9,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
-
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -17,6 +20,7 @@ public class UserController {
 
     private final UserService userService;
     private final CommunityService communityService;
+    private final AuthService authService;
 
     @GetMapping("/stats/{id}")
     public ResponseEntity<UserStatsResponse> getStats(@PathVariable Long id) {
@@ -36,5 +40,13 @@ public class UserController {
     @GetMapping("/posts/{id}")
     public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long id) {
         return ResponseEntity.ok(communityService.getPostsByUser(id));
+    }
+
+
+    @PutMapping("/update")
+    public ResponseEntity<UserResponse> updateProfile(@RequestBody UpdateProfileRequest request,
+                                                      Authentication authentication) {
+        User current = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(authService.updateProfile(current.getId(), request));
     }
 }
