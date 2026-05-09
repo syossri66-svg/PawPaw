@@ -111,7 +111,7 @@ public class MessageService {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        // تأكد إن اللي بيمسح الرسالة هو اللي بعتها (حماية)
+
         if (!message.getSender().getId().equals(currentUser.getId())) {
             throw new RuntimeException("You can only delete your own messages");
         }
@@ -119,7 +119,7 @@ public class MessageService {
         messageRepository.delete(message);
     }
 
-    // 2. ميثود تحويل المحادثة كلها لـ Seen
+
     public void markConversationAsRead(Long partnerId) {
         User currentUser = getCurrentUser();
         List<Message> messages = messageRepository.findConversation(currentUser.getId(), partnerId);

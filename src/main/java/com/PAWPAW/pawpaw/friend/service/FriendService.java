@@ -64,13 +64,24 @@ public class FriendService {
     }
 
     private FriendResponse mapToResponse(Friend friend) {
+        User current = getCurrentUser();
         FriendResponse response = new FriendResponse();
         response.setId(friend.getId());
+        response.setStatus(friend.getStatus());
         response.setRequesterId(friend.getRequester().getId());
         response.setRequesterName(friend.getRequester().getFullName());
         response.setReceiverId(friend.getReceiver().getId());
         response.setReceiverName(friend.getReceiver().getFullName());
-        response.setStatus(friend.getStatus());
+
+
+        if (friend.getRequester().getId().equals(current.getId())) {
+            response.setName(friend.getReceiver().getFullName());
+        } else {
+            response.setName(friend.getRequester().getFullName());
+        }
+
+        response.setAvatar(null);
+        response.setMutual(0);
         return response;
     }
     public List<Map<String, Object>> getSuggestions() {

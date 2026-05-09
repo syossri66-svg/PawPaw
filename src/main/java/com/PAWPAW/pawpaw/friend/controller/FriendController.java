@@ -21,13 +21,13 @@ public class FriendController {
         return ResponseEntity.ok(friendService.sendFriendRequest(receiverId));
     }
 
-    @PutMapping("/respond/{friendId}")
+    @PutMapping("/accept/{friendId}")
     public ResponseEntity<FriendResponse> respond(@PathVariable Long friendId,
                                                   @RequestParam FriendStatus status) {
         return ResponseEntity.ok(friendService.respondToRequest(friendId, status));
     }
 
-    @GetMapping("/pending")
+    @GetMapping("/requests")
     public ResponseEntity<List<FriendResponse>> getPending() {
         return ResponseEntity.ok(friendService.getPendingRequests());
     }
