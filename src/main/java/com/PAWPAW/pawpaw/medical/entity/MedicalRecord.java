@@ -48,21 +48,23 @@ public class MedicalRecord {
     private String dosage;
     private String duration;
     private String reportUrl;
+    @Builder.Default
     @ElementCollection
-    @CollectionTable(name = "pet_allergies",
-            joinColumns = @JoinColumn(name = "record_id"))
+    @CollectionTable(name = "pet_allergies", joinColumns = @JoinColumn(name = "record_id"))
     @Column(name = "allergy")
     private List<String> allergies = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL)
     private List<Medication> medications = new ArrayList<>();
-
     private String vaccinationStatus;
     private LocalDate nextVaccinationDate;
     private LocalDate nextVisitDate;
     private String rxNumber;
     private String clinicalNotes;
+    @Builder.Default
     private Boolean hasAiReport = false;
+
 
     private String visitTitle;
 }
