@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.ai.service;
 
+import com.PAWPAW.pawpaw.ai.dto.AiChatResponse;
 import com.PAWPAW.pawpaw.ai.entity.AiChat;
 import com.PAWPAW.pawpaw.ai.entity.AiMessage;
 import com.PAWPAW.pawpaw.ai.repository.AiChatRepository;
@@ -9,6 +10,8 @@ import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -28,18 +31,21 @@ public class AiChatService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public AiChat createChat() {
+    public AiChatResponse createChat()  {
         User user = getCurrentUser();
         AiChat chat = AiChat.builder()
                 .title("New Chat")
                 .user(user)
                 .build();
-        return aiChatRepository.save(chat);
+        return toResponse(aiChatRepository.save(chat));
     }
 
-    public List<AiChat> getMyChats() {
+    public List<AiChatResponse> getMyChats() {
         User user = getCurrentUser();
-        return aiChatRepository.findByUserIdOrderByUpdatedAtDesc(user.getId());
+        return aiChatRepository.findByUserIdOrderByUpdatedAtDesc(user.getId())
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public Map<String, String> sendMessage(Long chatId, String message) {
@@ -60,7 +66,7 @@ public class AiChatService {
                 .build();
         aiMessageRepository.save(aiMessage);
 
-        // لو أول رسالة — حدثي العنوان
+
         if (chat.getMessages().size() == 0) {
             chat.setTitle(message.length() > 30 ? message.substring(0, 30) + "..." : message);
         }
@@ -76,14 +82,30 @@ public class AiChatService {
         return chat.getMessages();
     }
 
-    public AiChat updateStatus(Long chatId, String status) {
+    public AiChatResponse updateStatus(Long chatId, String status) {
         AiChat chat = aiChatRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
         chat.setStatus(status);
-        return aiChatRepository.save(chat);
+        return toResponse(aiChatRepository.save(chat));
     }
 
     public void deleteChat(Long chatId) {
         aiChatRepository.deleteById(chatId);
     }
+    private AiChatResponse toResponse(AiChat chat) {
+        return AiChatResponse.builder()
+                .id(chat.getId())
+                .title(chat.getTitle())
+                .status(chat.getStatus())
+                .createdAt(chat.getCreatedAt())
+                .updatedAt(chat.getUpdatedAt())
+                .user(AiChatResponse.UserSummary.builder()
+                        .id(chat.getUser().getId())
+                        .fullName(chat.getUser().getFullName())
+                        .email(chat.getUser().getEmail())
+                        .avatarUrl(chat.getUser().getAvatarUrl())
+                        .build())
+                .build();
+    }
+
 }
