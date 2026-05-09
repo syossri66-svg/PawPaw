@@ -49,4 +49,8 @@ public class UserController {
         User current = (User) authentication.getPrincipal();
         return ResponseEntity.ok(authService.updateProfile(current.getId(), request));
     }
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<UserResponse> getUserProfile(@PathVariable Long id) {
+        return ResponseEntity.ok(authService.getUserProfile(id));
+    }
 }
