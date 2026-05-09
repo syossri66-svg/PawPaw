@@ -2,6 +2,7 @@ package com.PAWPAW.pawpaw.pet.service;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
 import com.PAWPAW.pawpaw.pet.dto.PetRequest;
 import com.PAWPAW.pawpaw.pet.dto.PetResponse;
 import com.PAWPAW.pawpaw.pet.entity.Pet;
@@ -13,13 +14,15 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
+
 @Service
 @RequiredArgsConstructor
 public class PetService {
 
     private final PetRepository petRepository;
     private final UserRepository userRepository;
-
+    private final MedicalRecordRepository medicalRecordRepository;
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
@@ -90,6 +93,16 @@ public class PetService {
         response.setOwnerId(pet.getOwner().getId());
         response.setOwnerName(pet.getOwner().getFullName());
         response.setCreatedAt(pet.getCreatedAt());
+
+        medicalRecordRepository
+                .findByPetIdOrderByVisitDateDesc(pet.getId())
+                .stream()
+                .findFirst()
+                .ifPresent(record -> {
+                    response.setVetName(record.getVet().getFullName());
+                    response.setLastDiagnosis(record.getDiagnosis());
+                    response.setLastVisitDate(record.getVisitDate());
+                });
         return response;
     }
 }

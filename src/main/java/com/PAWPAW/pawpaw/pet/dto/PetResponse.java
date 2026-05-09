@@ -18,4 +18,7 @@ public class PetResponse {
     private Long ownerId;
     private String ownerName;
     private LocalDateTime createdAt;
+    private String vetName;
+    private String lastDiagnosis;
+    private LocalDateTime lastVisitDate;
 }
