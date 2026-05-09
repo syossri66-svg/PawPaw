@@ -1,0 +1,62 @@
+package com.PAWPAW.pawpaw.ai.controller;
+
+import com.PAWPAW.pawpaw.ai.service.AiChatService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/ai/chats")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class AiChatController {
+
+    private final AiChatService aiChatService;
+
+    // إنشاء شات جديد
+    @PostMapping
+    public ResponseEntity<?> createChat() {
+        return ResponseEntity.ok(aiChatService.createChat());
+    }
+
+    // جيب كل الشاتات
+    @GetMapping
+    public ResponseEntity<?> getMyChats() {
+        return ResponseEntity.ok(aiChatService.getMyChats());
+    }
+
+    // بعت رسالة في شات معين
+    @PostMapping("/{chatId}/messages")
+    public ResponseEntity<?> sendMessage(
+            @PathVariable Long chatId,
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(aiChatService.sendMessage(chatId, body.get("message")));
+    }
+
+    // جيب رسائل شات معين
+    @GetMapping("/{chatId}/messages")
+    public ResponseEntity<?> getChatMessages(@PathVariable Long chatId) {
+        return ResponseEntity.ok(aiChatService.getChatMessages(chatId));
+    }
+
+    // Pin
+    @PatchMapping("/{chatId}/pin")
+    public ResponseEntity<?> pinChat(@PathVariable Long chatId) {
+        return ResponseEntity.ok(aiChatService.updateStatus(chatId, "PINNED"));
+    }
+
+    // Archive
+    @PatchMapping("/{chatId}/archive")
+    public ResponseEntity<?> archiveChat(@PathVariable Long chatId) {
+        return ResponseEntity.ok(aiChatService.updateStatus(chatId, "ARCHIVED"));
+    }
+
+    // Delete
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<Void> deleteChat(@PathVariable Long chatId) {
+        aiChatService.deleteChat(chatId);
+        return ResponseEntity.noContent().build();
+    }
+}

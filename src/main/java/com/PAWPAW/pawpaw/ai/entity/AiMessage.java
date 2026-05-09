@@ -28,4 +28,8 @@ public class AiMessage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "chat_id")
+    private AiChat chat;
 }
