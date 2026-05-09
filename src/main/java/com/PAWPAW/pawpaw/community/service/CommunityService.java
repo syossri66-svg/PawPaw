@@ -20,6 +20,7 @@ public class CommunityService {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
+    private final FollowRepository followRepository;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -94,17 +95,42 @@ public class CommunityService {
         }
     }
 
-    // Mappers
     private PostResponse mapToPostResponse(Post post) {
+        User currentUser = getCurrentUser();
+
         PostResponse response = new PostResponse();
-        response.setId(post.getId());
-        response.setContent(post.getContent());
-        response.setImageUrl(post.getImageUrl());
-        response.setUserId(post.getUser().getId());
-        response.setUserName(post.getUser().getFullName());
-        response.setLikesCount(likeRepository.countByPostId(post.getId()));
-        response.setCommentsCount(commentRepository.findByPostId(post.getId()).size());
         response.setCreatedAt(post.getCreatedAt());
+
+        // User Info
+        PostResponse.UserInfo userInfo = new PostResponse.UserInfo();
+        userInfo.setId(post.getUser().getId());
+        userInfo.setName(post.getUser().getFullName());
+        userInfo.setAvatar(post.getUser().getAvatarUrl());
+        userInfo.setFollowing(followRepository.findByFollowerIdAndFollowingId(
+                currentUser.getId(), post.getUser().getId()).isPresent());
+        response.setUser(userInfo);
+
+        // Content Info
+        PostResponse.ContentInfo contentInfo = new PostResponse.ContentInfo();
+        contentInfo.setText(post.getContent());
+        contentInfo.setMediaUrl(post.getImageUrl());
+        contentInfo.setType(post.getImageUrl() != null ? "image" : null);
+        response.setContent(contentInfo);
+
+
+        PostResponse.StatsInfo statsInfo = new PostResponse.StatsInfo();
+        statsInfo.setLikes(likeRepository.countByPostId(post.getId()));
+        statsInfo.setComments(commentRepository.findByPostId(post.getId()).size());
+        statsInfo.setShares(0);
+        response.setStats(statsInfo);
+
+
+        response.setLiked(likeRepository.findByUserIdAndPostId(
+                currentUser.getId(), post.getId()).isPresent());
+
+
+        response.setSaved(false);
+
         return response;
     }
 
@@ -122,8 +148,7 @@ public class CommunityService {
         return postRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream().map(this::mapToPostResponse).collect(Collectors.toList());
     }
-    // في CommunityService.java أضيفي:
-    private final FollowRepository followRepository;
+
 
     public String toggleFollow(Long targetUserId) {
         User currentUser = getCurrentUser();
