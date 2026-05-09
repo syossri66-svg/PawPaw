@@ -33,4 +33,9 @@ public class MedicalRecordController {
     public ResponseEntity<List<MedicalRecordResponse>> getMyVetRecords() {
         return ResponseEntity.ok(medicalRecordService.getMyVetRecords());
     }
+    @GetMapping("/{recordId}")
+    public ResponseEntity<MedicalRecordResponse> getRecordById(
+            @PathVariable Long recordId) {
+        return ResponseEntity.ok(medicalRecordService.getRecordById(recordId));
+    }
 }

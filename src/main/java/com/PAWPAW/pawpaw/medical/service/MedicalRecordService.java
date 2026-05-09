@@ -76,6 +76,22 @@ public class MedicalRecordService {
         response.setWeight(record.getWeight());
         response.setVisitDate(record.getVisitDate());
         response.setCreatedAt(record.getCreatedAt());
+        response.setAllergies(record.getAllergies());
+        response.setPrescription(record.getPrescription());
+        response.setDosage(record.getDosage());
+        response.setDuration(record.getDuration());
+        response.setReportUrl(record.getReportUrl());
+// Pet snapshot
+        response.setPetPhotoUrl(record.getPet().getPhotoUrl());
+        response.setPetSpecies(record.getPet().getSpecies());
+        response.setPetBreed(record.getPet().getBreed());
+        response.setPetWeight(record.getWeight());
         return response;
+    }
+
+    public MedicalRecordResponse getRecordById(Long recordId) {
+        MedicalRecord record = medicalRecordRepository.findById(recordId)
+                .orElseThrow(() -> new RuntimeException("Record not found"));
+        return mapToResponse(record);
     }
 }

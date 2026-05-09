@@ -2,6 +2,7 @@ package com.PAWPAW.pawpaw.medical.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class MedicalRecordResponse {
@@ -17,4 +18,14 @@ public class MedicalRecordResponse {
     private Double weight;
     private LocalDateTime visitDate;
     private LocalDateTime createdAt;
+    private List<String> allergies;
+    private String prescription;
+    private String dosage;
+    private String duration;
+    private String reportUrl;
+    // Pet snapshot
+    private String petPhotoUrl;
+    private String petSpecies;
+    private String petBreed;
+    private Double petWeight;
 }

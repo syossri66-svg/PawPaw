@@ -3,12 +3,18 @@ package com.PAWPAW.pawpaw.medical.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class MedicalRecordRequest {
 
     @NotNull
     private Long petId;
+    private List<String> allergies;
+    private String prescription;
+    private String dosage;
+    private String duration;
+    private String reportUrl;
 
     private String diagnosis;
     private String treatment;

@@ -5,6 +5,7 @@ import com.PAWPAW.pawpaw.pet.entity.Pet;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "medical_records")
@@ -39,4 +40,14 @@ public class MedicalRecord {
         createdAt = LocalDateTime.now();
         if (visitDate == null) visitDate = LocalDateTime.now();
     }
+    // ضيفي الـ fields دي جوا الـ entity
+    @ElementCollection
+    @CollectionTable(name = "pet_allergies", joinColumns = @JoinColumn(name = "record_id"))
+    @Column(name = "allergy")
+    private List<String> allergies;
+
+    private String prescription;
+    private String dosage;
+    private String duration;
+    private String reportUrl;
 }
