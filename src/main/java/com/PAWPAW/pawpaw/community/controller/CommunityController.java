@@ -57,4 +57,19 @@ public class CommunityController {
     public ResponseEntity<String> toggleFollow(@PathVariable Long id) {
         return ResponseEntity.ok(communityService.toggleFollow(id));
     }
+    @PostMapping("/posts/{postId}/save")
+    public ResponseEntity<String> toggleSave(@PathVariable Long postId) {
+        return ResponseEntity.ok(communityService.toggleSave(postId));
+    }
+
+    @GetMapping("/posts/saved")
+    public ResponseEntity<List<PostResponse>> getSavedPosts() {
+        return ResponseEntity.ok(communityService.getSavedPosts());
+    }
+
+    @PostMapping("/comments/{commentId}/reply")
+    public ResponseEntity<CommentResponse> replyToComment(@PathVariable Long commentId,
+                                                          @Valid @RequestBody CommentRequest request) {
+        return ResponseEntity.ok(communityService.replyToComment(commentId, request));
+    }
 }

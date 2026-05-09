@@ -129,7 +129,8 @@ public class CommunityService {
                 currentUser.getId(), post.getId()).isPresent());
 
 
-        response.setSaved(false);
+        response.setSaved(savedPostRepository.findByUserIdAndPostId(
+                currentUser.getId(), post.getId()).isPresent());
 
         return response;
     }
@@ -167,5 +168,47 @@ public class CommunityService {
                     .build());
             return "Followed";
         }
+    }
+    private final SavedPostRepository savedPostRepository;
+
+    // Save Toggle
+    public String toggleSave(Long postId) {
+        User user = getCurrentUser();
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        var existing = savedPostRepository.findByUserIdAndPostId(user.getId(), postId);
+        if (existing.isPresent()) {
+            savedPostRepository.delete(existing.get());
+            return "Unsaved";
+        } else {
+            savedPostRepository.save(SavedPost.builder()
+                    .user(user).post(post).build());
+            return "Saved";
+        }
+    }
+
+    // Get Saved Posts
+    public List<PostResponse> getSavedPosts() {
+        User user = getCurrentUser();
+        return savedPostRepository.findByUserId(user.getId())
+                .stream()
+                .map(sp -> mapToPostResponse(sp.getPost()))
+                .collect(Collectors.toList());
+    }
+
+    // Reply to Comment
+    public CommentResponse replyToComment(Long parentId, CommentRequest request) {
+        User user = getCurrentUser();
+        Comment parent = commentRepository.findById(parentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        Comment reply = Comment.builder()
+                .content(request.getContent())
+                .user(user)
+                .post(parent.getPost())
+                .parent(parent)
+                .build();
+        return mapToCommentResponse(commentRepository.save(reply));
     }
 }

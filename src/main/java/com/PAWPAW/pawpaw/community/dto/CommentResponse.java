@@ -2,6 +2,7 @@ package com.PAWPAW.pawpaw.community.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class CommentResponse {
@@ -11,4 +12,5 @@ public class CommentResponse {
     private String userName;
     private Long postId;
     private LocalDateTime createdAt;
+    private List<CommentResponse> replies;
 }

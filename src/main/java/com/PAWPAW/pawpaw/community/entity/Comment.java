@@ -4,6 +4,7 @@ import com.PAWPAW.pawpaw.auth.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "comments")
@@ -34,4 +35,10 @@ public class Comment {
     public void prePersist() {
         createdAt = LocalDateTime.now();
     }
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    private List<Comment> replies;
 }
