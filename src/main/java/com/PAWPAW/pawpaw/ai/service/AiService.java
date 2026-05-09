@@ -11,7 +11,7 @@ import java.util.Map;
 @Service
 public class AiService {
 
-    @Value("${AI_KEY:dummy_key}")
+    @Value("${SPRING_AI_OPENAI_API_KEY:dummy_key}")
     private String apiKey;
 
     @Value("${AI_URL:https://openrouter.ai/api/v1/chat/completions}")
