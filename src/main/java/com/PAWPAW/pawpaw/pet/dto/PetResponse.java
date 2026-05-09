@@ -21,4 +21,8 @@ public class PetResponse {
     private String vetName;
     private String lastDiagnosis;
     private LocalDateTime lastVisitDate;
+    private String healthStatus;
+    private String uniqueId;
+    private Boolean vaccinated;
+    private Double weight;
 }

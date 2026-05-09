@@ -22,4 +22,9 @@ public class PetRequest {
     private String medicalNotes;
 
     private PetGender gender;
+
+    private String healthStatus;
+    private String uniqueId;
+    private Boolean vaccinated;
+    private Double weight;
 }

@@ -30,6 +30,8 @@ public class Pet {
     private String photoUrl;
 
     private String medicalNotes;
+    private String healthStatus;
+    private String uniqueId;
 
     @Enumerated(EnumType.STRING)
     private PetGender gender;

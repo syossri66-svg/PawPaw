@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 
 
+
 @Service
 @RequiredArgsConstructor
 public class PetService {
@@ -49,6 +50,8 @@ public class PetService {
                 .photoUrl(request.getPhotoUrl())
                 .medicalNotes(request.getMedicalNotes())
                 .gender(request.getGender())
+                .healthStatus(request.getHealthStatus())
+                .uniqueId(request.getUniqueId())
                 .owner(owner)
                 .build();
 
@@ -81,6 +84,8 @@ public class PetService {
         pet.setPhotoUrl(request.getPhotoUrl());
         pet.setMedicalNotes(request.getMedicalNotes());
         pet.setGender(request.getGender());
+        pet.setHealthStatus(request.getHealthStatus());
+        pet.setUniqueId(request.getUniqueId());
 
         return mapToResponse(petRepository.save(pet));
     }
@@ -102,6 +107,10 @@ public class PetService {
         response.setOwnerId(pet.getOwner().getId());
         response.setOwnerName(pet.getOwner().getFullName());
         response.setCreatedAt(pet.getCreatedAt());
+        response.setHealthStatus(pet.getHealthStatus());
+        response.setUniqueId(pet.getUniqueId());
+
+
 
         medicalRecordRepository
                 .findByPetIdOrderByVisitDateDesc(pet.getId())
@@ -111,8 +120,14 @@ public class PetService {
                     response.setVetName(record.getVet().getFullName());
                     response.setLastDiagnosis(record.getDiagnosis());
                     response.setLastVisitDate(record.getVisitDate());
+                    response.setWeight(record.getWeight());
+                    response.setVaccinated(
+                            record.getVaccinationStatus() != null &&
+                                    record.getVaccinationStatus().equalsIgnoreCase("Up To Date")
+                    );
                 });
         return response;
     }
+
 
 }
