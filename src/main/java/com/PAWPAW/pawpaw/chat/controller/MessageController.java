@@ -23,12 +23,12 @@ public class MessageController {
         return ResponseEntity.ok(messageService.sendMessage(request));
     }
 
-    @GetMapping("/conversation/{otherUserId}")
+    @GetMapping("/{conversationId}")
     public ResponseEntity<List<MessageResponse>> getConversation(@PathVariable Long otherUserId) {
         return ResponseEntity.ok(messageService.getConversation(otherUserId));
     }
 
-    @GetMapping("/conversations")
+    @GetMapping("/api/conversations")
     public ResponseEntity<List<ConversationResponse>> getMyConversations() {
         return ResponseEntity.ok(messageService.getMyConversations());
     }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/community")
+@RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class CommunityController {
 
@@ -52,5 +52,9 @@ public class CommunityController {
     @PostMapping("/posts/{postId}/like")
     public ResponseEntity<String> toggleLike(@PathVariable Long postId) {
         return ResponseEntity.ok(communityService.toggleLike(postId));
+    }
+    @PostMapping("/api/users/follow/{id}")
+    public ResponseEntity<String> toggleFollow(@PathVariable Long id) {
+        return ResponseEntity.ok(communityService.toggleFollow(id));
     }
 }

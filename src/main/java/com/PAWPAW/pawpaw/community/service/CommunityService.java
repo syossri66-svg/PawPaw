@@ -122,4 +122,25 @@ public class CommunityService {
         return postRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream().map(this::mapToPostResponse).collect(Collectors.toList());
     }
+    // في CommunityService.java أضيفي:
+    private final FollowRepository followRepository;
+
+    public String toggleFollow(Long targetUserId) {
+        User currentUser = getCurrentUser();
+        var existing = followRepository.findByFollowerIdAndFollowingId(
+                currentUser.getId(), targetUserId);
+
+        if (existing.isPresent()) {
+            followRepository.delete(existing.get());
+            return "Unfollowed";
+        } else {
+            User target = userRepository.findById(targetUserId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            followRepository.save(Follow.builder()
+                    .follower(currentUser)
+                    .following(target)
+                    .build());
+            return "Followed";
+        }
+    }
 }
