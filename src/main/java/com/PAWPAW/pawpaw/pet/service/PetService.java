@@ -1,6 +1,7 @@
 package com.PAWPAW.pawpaw.pet.service;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
+import com.PAWPAW.pawpaw.auth.entity.UserRole;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
 import com.PAWPAW.pawpaw.pet.dto.PetRequest;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PetService {
 
+
     private final PetRepository petRepository;
     private final UserRepository userRepository;
     private final MedicalRecordRepository medicalRecordRepository;
@@ -31,6 +33,13 @@ public class PetService {
 
     public PetResponse addPet(PetRequest request) {
         User owner = getCurrentUser();
+
+
+        if (owner.getRole() == UserRole.ROLE_VET) {
+            throw new RuntimeException("Vets cannot add pets");
+        }
+
+
 
         Pet pet = Pet.builder()
                 .name(request.getName())
@@ -105,4 +114,5 @@ public class PetService {
                 });
         return response;
     }
+
 }
