@@ -28,4 +28,13 @@ public class MedicalRecordResponse {
     private String petSpecies;
     private String petBreed;
     private Double petWeight;
+    private String petGender;
+    private String vaccinationStatus;
+    private java.time.LocalDate nextVaccinationDate;
+    private java.time.LocalDate nextVisitDate;
+    private String visitTitle;
+    private String rxNumber;
+    private String clinicalNotes;
+    private Boolean hasAiReport;
+    private List<MedicationResponse> medications;
 }

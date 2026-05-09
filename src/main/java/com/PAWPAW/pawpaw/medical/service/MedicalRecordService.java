@@ -4,7 +4,9 @@ import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.medical.dto.MedicalRecordRequest;
 import com.PAWPAW.pawpaw.medical.dto.MedicalRecordResponse;
+import com.PAWPAW.pawpaw.medical.dto.MedicationResponse;
 import com.PAWPAW.pawpaw.medical.entity.MedicalRecord;
+import com.PAWPAW.pawpaw.medical.entity.Medication;
 import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
 import com.PAWPAW.pawpaw.pet.entity.Pet;
 import com.PAWPAW.pawpaw.pet.repository.PetRepository;
@@ -42,9 +44,34 @@ public class MedicalRecordService {
                 .clinicName(request.getClinicName())
                 .weight(request.getWeight())
                 .visitDate(request.getVisitDate())
+                .allergies(request.getAllergies())
+                .vaccinationStatus(request.getVaccinationStatus())
+                .nextVaccinationDate(request.getNextVaccinationDate())
+                .nextVisitDate(request.getNextVisitDate())
+                .rxNumber(request.getRxNumber())
+                .clinicalNotes(request.getClinicalNotes())
+                .hasAiReport(request.getHasAiReport())
+                .visitTitle(request.getVisitTitle())
+                .reportUrl(request.getReportUrl())
                 .build();
+        MedicalRecord saved = medicalRecordRepository.save(record);
 
-        return mapToResponse(medicalRecordRepository.save(record));
+        // حفظ الـ medications
+        if (request.getMedications() != null) {
+            request.getMedications().forEach(m -> {
+                Medication med = Medication.builder()
+                        .medicalRecord(saved)
+                        .name(m.getName())
+                        .strength(m.getStrength())
+                        .instruction(m.getInstruction())
+                        .duration(m.getDuration())
+                        .build();
+                saved.getMedications().add(med);
+            });
+            medicalRecordRepository.save(saved);
+        }
+
+        return mapToResponse(saved);
     }
 
     public List<MedicalRecordResponse> getPetRecords(Long petId) {
@@ -86,6 +113,47 @@ public class MedicalRecordService {
         response.setPetSpecies(record.getPet().getSpecies());
         response.setPetBreed(record.getPet().getBreed());
         response.setPetWeight(record.getWeight());
+
+        // Pet Info
+        response.setPetId(record.getPet().getId());
+        response.setPetName(record.getPet().getName());
+        response.setPetSpecies(record.getPet().getSpecies());
+        response.setPetBreed(record.getPet().getBreed());
+        response.setPetGender(record.getPet().getGender().toString());
+        response.setPetPhotoUrl(record.getPet().getPhotoUrl());
+        response.setPetWeight(record.getWeight());
+
+        // Health Summary
+        response.setVaccinationStatus(record.getVaccinationStatus());
+        response.setNextVaccinationDate(record.getNextVaccinationDate());
+        response.setNextVisitDate(record.getNextVisitDate());
+        response.setAllergies(record.getAllergies());
+
+        // Vet Info
+        response.setVetId(record.getVet().getId());
+        response.setVetName(record.getVet().getFullName());
+        response.setClinicName(record.getClinicName());
+        response.setVisitDate(record.getVisitDate());
+        response.setVisitTitle(record.getVisitTitle());
+        response.setDiagnosis(record.getDiagnosis());
+
+        // Prescription
+        response.setRxNumber(record.getRxNumber());
+        response.setClinicalNotes(record.getClinicalNotes());
+        response.setMedications(record.getMedications().stream()
+                .map(m -> {
+                    MedicationResponse med = new MedicationResponse();
+                    med.setName(m.getName());
+                    med.setStrength(m.getStrength());
+                    med.setInstruction(m.getInstruction());
+                    med.setDuration(m.getDuration());
+                    return med;
+                }).collect(Collectors.toList()));
+
+        response.setHasAiReport(record.getHasAiReport());
+        response.setReportUrl(record.getReportUrl());
+        response.setCreatedAt(record.getCreatedAt());
+
         return response;
     }
 
@@ -94,4 +162,5 @@ public class MedicalRecordService {
                 .orElseThrow(() -> new RuntimeException("Record not found"));
         return mapToResponse(record);
     }
+
 }

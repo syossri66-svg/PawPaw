@@ -4,7 +4,10 @@ import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.pet.entity.Pet;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -40,14 +43,26 @@ public class MedicalRecord {
         createdAt = LocalDateTime.now();
         if (visitDate == null) visitDate = LocalDateTime.now();
     }
-    // ضيفي الـ fields دي جوا الـ entity
-    @ElementCollection
-    @CollectionTable(name = "pet_allergies", joinColumns = @JoinColumn(name = "record_id"))
-    @Column(name = "allergy")
-    private List<String> allergies;
 
     private String prescription;
     private String dosage;
     private String duration;
     private String reportUrl;
+    @ElementCollection
+    @CollectionTable(name = "pet_allergies",
+            joinColumns = @JoinColumn(name = "record_id"))
+    @Column(name = "allergy")
+    private List<String> allergies = new ArrayList<>();
+
+    @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL)
+    private List<Medication> medications = new ArrayList<>();
+
+    private String vaccinationStatus;
+    private LocalDate nextVaccinationDate;
+    private LocalDate nextVisitDate;
+    private String rxNumber;
+    private String clinicalNotes;
+    private Boolean hasAiReport = false;
+
+    private String visitTitle;
 }
