@@ -99,6 +99,7 @@ public class CommunityService {
         User currentUser = getCurrentUser();
 
         PostResponse response = new PostResponse();
+        response.setId(post.getId());
         response.setCreatedAt(post.getCreatedAt());
 
         // User Info
