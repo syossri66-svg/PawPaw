@@ -4,6 +4,7 @@ import com.PAWPAW.pawpaw.appointment.entity.AppointmentStatus;
 import com.PAWPAW.pawpaw.appointment.repository.AppointmentRepository;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
 import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileRequest;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
@@ -13,12 +14,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VetService {
+    private final MedicalRecordRepository medicalRecordRepository;
 
     private final VetProfileRepository vetProfileRepository;
     private final UserRepository userRepository;
@@ -99,9 +105,41 @@ public class VetService {
         VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
-        long totalAppointments = appointmentRepository.countByVetId(user.getId());
-        long pendingAppointments = appointmentRepository.countByVetIdAndStatus(user.getId(), AppointmentStatus.PENDING);
-        long completedAppointments = appointmentRepository.countByVetIdAndStatus(user.getId(), AppointmentStatus.COMPLETED);
+        Long vetId = user.getId();
+        LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        long totalAppointments = appointmentRepository.countByVetId(vetId);
+        long pendingAppointments = appointmentRepository.countByVetIdAndStatus(vetId, AppointmentStatus.PENDING);
+        long completedAppointments = appointmentRepository.countByVetIdAndStatus(vetId, AppointmentStatus.COMPLETED);
+        long newPatients = appointmentRepository.countNewPatientsThisMonth(vetId, startOfMonth);
+        long aiDiagnoses = medicalRecordRepository.findByVetId(vetId)
+                .stream().filter(r -> Boolean.TRUE.equals(r.getHasAiReport())).count();
+
+        // Upcoming
+        List<VetDashboardResponse.UpcomingAppointment> upcoming = appointmentRepository
+                .findByVetIdAndStatusOrderByScheduledAtAsc(vetId, AppointmentStatus.PENDING)
+                .stream().limit(5).map(a -> {
+                    VetDashboardResponse.UpcomingAppointment ua = new VetDashboardResponse.UpcomingAppointment();
+                    ua.setId(a.getId());
+                    ua.setPetName(a.getPet().getName());
+                    ua.setBreed(a.getPet().getBreed());
+                    ua.setTime(a.getScheduledAt().format(formatter));
+                    ua.setAvatarUrl(a.getPet().getPhotoUrl());
+                    return ua;
+                }).collect(Collectors.toList());
+
+        // Recent Cases
+        List<VetDashboardResponse.RecentCase> recentCases = medicalRecordRepository
+                .findByVetId(vetId).stream().limit(5).map(r -> {
+                    VetDashboardResponse.RecentCase rc = new VetDashboardResponse.RecentCase();
+                    rc.setCaseId(r.getId());
+                    rc.setPetName(r.getPet().getName());
+                    rc.setOwnerName(r.getPet().getOwner().getFullName());
+                    rc.setStatus(r.getPet().getHealthStatus() != null ? r.getPet().getHealthStatus() : "Stable");
+                    rc.setImageUrl(r.getPet().getPhotoUrl());
+                    return rc;
+                }).collect(Collectors.toList());
 
         return VetDashboardResponse.builder()
                 .profile(mapToResponse(profile))
@@ -110,8 +148,10 @@ public class VetService {
                 .averageRating(0.0)
                 .accountStatus(profile.isApproved() ? "APPROVED" : "PENDING")
                 .consultationsComplete(completedAppointments)
-                .newPatientsThisMonth(0L)
-                .aiDiagnosisTimes(0L)
+                .newPatientsThisMonth(newPatients)
+                .aiDiagnosisTimes(aiDiagnoses)
+                .upcomingAppointments(upcoming)
+                .recentCases(recentCases)
                 .build();
     }
 
