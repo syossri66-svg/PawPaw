@@ -55,14 +55,24 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // 👈 الميثود الصحيحة للـ CORS بدون تكرار
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+
+
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+
         configuration.setAllowedHeaders(List.of("*"));
+
         configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(false);
+
+
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -77,10 +87,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
-
                         .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
-
-
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/friends/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
