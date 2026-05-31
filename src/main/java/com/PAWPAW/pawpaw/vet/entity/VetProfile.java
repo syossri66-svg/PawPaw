@@ -40,10 +40,6 @@ public class VetProfile {
 
     private String rejectionReason;
 
-
-
-
-
     private Integer yearsOfExperience;
     private String education;
     private String documentUrl;
