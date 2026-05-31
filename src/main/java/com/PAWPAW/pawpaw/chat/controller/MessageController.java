@@ -23,12 +23,12 @@ public class MessageController {
         return ResponseEntity.ok(messageService.sendMessage(request));
     }
 
-    @GetMapping("/{conversationId}")
+    @GetMapping("/conversation/{otherUserId}")
     public ResponseEntity<List<MessageResponse>> getConversation(@PathVariable Long otherUserId) {
         return ResponseEntity.ok(messageService.getConversation(otherUserId));
     }
 
-    @GetMapping("/api/conversations")
+    @GetMapping("/conversations")
     public ResponseEntity<List<ConversationResponse>> getMyConversations() {
         return ResponseEntity.ok(messageService.getMyConversations());
     }
@@ -37,17 +37,16 @@ public class MessageController {
     public ResponseEntity<Long> getUnreadCount(@PathVariable Long senderId) {
         return ResponseEntity.ok(messageService.getUnreadCount(senderId));
     }
-    // مسح رسالة معينة
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
-        messageService.deleteMessage(id); // هتحتاجي تضيفي الميثود دي في الـ Service
+        messageService.deleteMessage(id);
         return ResponseEntity.noContent().build();
     }
 
-    // تغيير حالة المحادثة كلها لـ "Seen"
     @PatchMapping("/read/{conversationId}")
     public ResponseEntity<Void> markAsSeen(@PathVariable Long conversationId) {
-        messageService.markConversationAsRead(conversationId); // هتحتاجي تضيفيها في الـ Service
+        messageService.markConversationAsRead(conversationId);
         return ResponseEntity.ok().build();
     }
 }

@@ -87,10 +87,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
 
-                        .requestMatchers("/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
+                        .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                         .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
 
 

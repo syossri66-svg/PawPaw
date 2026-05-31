@@ -13,7 +13,7 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinary;
 
-    // الـ Spring هيقرأ القيم دي تلقائياً من application.properties
+
     public CloudinaryService(
             @Value("${cloudinary.cloud-name}") String cloudName,
             @Value("${cloudinary.api-key}") String apiKey,
