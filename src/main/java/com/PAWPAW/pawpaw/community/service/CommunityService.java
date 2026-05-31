@@ -21,6 +21,7 @@ public class CommunityService {
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
+    private final CloudinaryService cloudinaryService;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -28,20 +29,18 @@ public class CommunityService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    // Posts
     public PostResponse createPost(PostRequest request) {
         User user = getCurrentUser();
         String uploadedImageUrl = null;
 
 
         if (request.getImage() != null && !request.getImage().isEmpty()) {
-
-
+            uploadedImageUrl = cloudinaryService.uploadFile(request.getImage());
         }
 
         Post post = Post.builder()
                 .content(request.getContent())
-                .imageUrl(uploadedImageUrl)
+                .imageUrl(uploadedImageUrl) // 👈 اللينك الجديد اللي راجع من Cloudinary هيتحفظ هنا
                 .user(user)
                 .build();
 
