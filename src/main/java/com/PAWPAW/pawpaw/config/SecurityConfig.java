@@ -55,23 +55,22 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // 👈 الميثود الصحيحة للـ CORS بدون تكرار
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-
+        // بنسمح للفرونت إند (سواء لوكال أو أي مكان) يكلم الباك إند
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
 
-
+        // بنسمح بجميع أنواع الـ Methods
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-
+        // بنسمح بجميع الـ Headers
         configuration.setAllowedHeaders(List.of("*"));
 
         configuration.setExposedHeaders(List.of("Authorization"));
 
-
+        // السماح بإرسال الـ Credentials
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -87,10 +86,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
-                        .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/friends/**", "/api/groups/**").authenticated()
-                        .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
+
+                        // 1. 👈 السطر السحري اللي زميلتك طلبته لتفعيل الـ OPTIONS لكل المسارات
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
+
+                        // 2. 👈 فتحنا مسار الأصدقاء بشكل صريح لأي مستخدم مسجل ومعاه توكن
+                        .requestMatchers("/api/friends", "/api/friends/**").authenticated()
+
+                        .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
+                        .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
