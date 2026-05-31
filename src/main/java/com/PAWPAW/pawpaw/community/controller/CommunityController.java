@@ -4,6 +4,7 @@ import com.PAWPAW.pawpaw.community.dto.*;
 import com.PAWPAW.pawpaw.community.service.CommunityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +17,8 @@ public class CommunityController {
 
     private final CommunityService communityService;
 
-    @PostMapping("/posts")
-    public ResponseEntity<PostResponse> createPost(@Valid @RequestBody PostRequest request) {
+    @PostMapping(value = "/posts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PostResponse> createPost(@Valid @ModelAttribute PostRequest request) {
         return ResponseEntity.ok(communityService.createPost(request));
     }
 

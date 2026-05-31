@@ -78,6 +78,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
+
+
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/friends/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

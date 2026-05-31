@@ -31,11 +31,20 @@ public class CommunityService {
     // Posts
     public PostResponse createPost(PostRequest request) {
         User user = getCurrentUser();
+        String uploadedImageUrl = null;
+
+
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+
+
+        }
+
         Post post = Post.builder()
                 .content(request.getContent())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(uploadedImageUrl)
                 .user(user)
                 .build();
+
         return mapToPostResponse(postRepository.save(post));
     }
 
