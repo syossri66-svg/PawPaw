@@ -22,7 +22,7 @@ public class CommunityService {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final CloudinaryService cloudinaryService;
-
+    private final SavedPostRepository savedPostRepository;
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
@@ -40,7 +40,7 @@ public class CommunityService {
 
         Post post = Post.builder()
                 .content(request.getContent())
-                .imageUrl(uploadedImageUrl) // 👈 اللينك الجديد اللي راجع من Cloudinary هيتحفظ هنا
+                .imageUrl(uploadedImageUrl)
                 .user(user)
                 .build();
 
@@ -178,7 +178,7 @@ public class CommunityService {
             return "Followed";
         }
     }
-    private final SavedPostRepository savedPostRepository;
+
 
     // Save Toggle
     public String toggleSave(Long postId) {
