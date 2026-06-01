@@ -51,8 +51,8 @@ public class AiService {
     }
 
 
+    // الميثود الجديدة لمعالجة الـ Visual Scan بعد تعديل الـ Repository
     public Mono<AiScan> saveAndProcessVisualScan(Long petId, Mono<FilePart> filePartMono, String imageUrl, Long userId) {
-
 
         AiScan mockScan = AiScan.builder()
                 .userId(userId)
@@ -68,11 +68,13 @@ public class AiService {
                 .build();
 
 
-        return aiScanRepository.save(mockScan);
+        AiScan savedScan = aiScanRepository.save(mockScan);
+        return Mono.just(savedScan);
     }
 
 
     public Mono<Long> getTotalScansCount() {
-        return aiScanRepository.count();
+        long count = aiScanRepository.count(); // جيه بي إيه عادي
+        return Mono.just(count);
     }
 }
