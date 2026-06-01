@@ -1,6 +1,7 @@
 package com.PAWPAW.pawpaw.community.entity;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
+import com.PAWPAW.pawpaw.group.entity.Group;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -34,6 +35,9 @@ public class Post {
     private List<Like> likes;
 
     private LocalDateTime createdAt;
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private Group group;
 
     @PrePersist
     public void prePersist() {
