@@ -7,6 +7,7 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,12 +28,10 @@ public class AiService {
     private final WebClient webClient;
     private final AiScanRepository aiScanRepository;
 
-
     public AiService(WebClient.Builder webClientBuilder, AiScanRepository aiScanRepository) {
         this.webClient = webClientBuilder.build();
         this.aiScanRepository = aiScanRepository;
     }
-
 
     public Mono<String> getAiResponse(String description) {
         Map<String, Object> body = Map.of(
@@ -51,13 +50,13 @@ public class AiService {
     }
 
 
-    // الميثود الجديدة لمعالجة الـ Visual Scan بعد تعديل الـ Repository
     public Mono<AiScan> saveAndProcessVisualScan(Long petId, Mono<FilePart> filePartMono, String imageUrl, Long userId) {
+
 
         AiScan mockScan = AiScan.builder()
                 .userId(userId)
                 .petId(petId)
-                .imageUrl(imageUrl != null ? imageUrl : "https://pawpaw-bucket.s3.amazonaws.com/mock-pet.jpg")
+                .imageUrl(imageUrl)
                 .status("COMPLETED")
                 .breedDetected("Persian Cat")
                 .hasIssue(true)
@@ -68,13 +67,13 @@ public class AiService {
                 .build();
 
 
-        AiScan savedScan = aiScanRepository.save(mockScan);
-        return Mono.just(savedScan);
+        return Mono.fromCallable(() -> aiScanRepository.save(mockScan))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
 
     public Mono<Long> getTotalScansCount() {
-        long count = aiScanRepository.count(); // جيه بي إيه عادي
-        return Mono.just(count);
+        return Mono.fromCallable(() -> aiScanRepository.count())
+                .subscribeOn(Schedulers.boundedElastic());
     }
 }
