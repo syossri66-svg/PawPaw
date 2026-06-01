@@ -2,11 +2,15 @@ package com.PAWPAW.pawpaw.community.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+
 @Data
 public class PostResponse {
     private Long id;
     private UserInfo user;
-    private String content;
+
+    // ✅ رجعناه كائن عشان الفرونت إند ميتشقلبش، والـ Getter والـ Setter هيتولدوا بـ Lombok تلقائي
+    private ContentInfo content;
+
     private StatsInfo stats;
     private boolean isLiked;
     private boolean isSaved;

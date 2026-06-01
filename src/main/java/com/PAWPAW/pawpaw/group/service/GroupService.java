@@ -100,17 +100,37 @@ public class GroupService {
 
         GroupResponse response = mapToResponse(group);
 
-        // هنا هنجيب البوستات المربوطة بالجروب ده ونحولها لـ Response DTO
-        // تأكدي إن عندك في الـ group entity أو الـ postRepository ميثود بتجيب البوستات بالـ groupId
-        // على سبيل المثال لو البوستات مربوطة علطول بالجروب:
         if (group.getPosts() != null) {
             List<com.PAWPAW.pawpaw.community.dto.PostResponse> postResponses = group.getPosts().stream()
                     .map(post -> {
-                        // هنا بتعملي المابينج بتاع البوست المعتاد عندك
+
                         com.PAWPAW.pawpaw.community.dto.PostResponse pr = new com.PAWPAW.pawpaw.community.dto.PostResponse();
                         pr.setId(post.getId());
-                        pr.setContent(post.getContent());
-                        // ... كملي باقي الفيلدز بتاعة البوست على حسب كود الـ Community عندك
+                        pr.setCreatedAt(post.getCreatedAt());
+
+
+                        com.PAWPAW.pawpaw.community.dto.PostResponse.UserInfo userInfo = new com.PAWPAW.pawpaw.community.dto.PostResponse.UserInfo();
+                        if (post.getUser() != null) {
+                            userInfo.setId(post.getUser().getId());
+                            userInfo.setName(post.getUser().getFullName());
+                            userInfo.setAvatar(post.getUser().getAvatarUrl());
+                        }
+                        pr.setUser(userInfo);
+
+
+                        com.PAWPAW.pawpaw.community.dto.PostResponse.ContentInfo contentInfo = new com.PAWPAW.pawpaw.community.dto.PostResponse.ContentInfo();
+                        contentInfo.setText(post.getContent());
+                        contentInfo.setMediaUrl(post.getImageUrl());
+                        contentInfo.setType(post.getImageUrl() != null ? "image" : null);
+                        pr.setContent(contentInfo);
+
+
+                        com.PAWPAW.pawpaw.community.dto.PostResponse.StatsInfo statsInfo = new com.PAWPAW.pawpaw.community.dto.PostResponse.StatsInfo();
+                        statsInfo.setLikes(0);
+                        statsInfo.setComments(0);
+                        statsInfo.setShares(0);
+                        pr.setStats(statsInfo);
+
                         return pr;
                     }).collect(Collectors.toList());
 

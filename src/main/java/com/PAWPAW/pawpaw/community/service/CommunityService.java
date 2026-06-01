@@ -23,6 +23,7 @@ public class CommunityService {
     private final FollowRepository followRepository;
     private final CloudinaryService cloudinaryService;
     private final SavedPostRepository savedPostRepository;
+
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
@@ -32,7 +33,6 @@ public class CommunityService {
     public PostResponse createPost(PostRequest request) {
         User user = getCurrentUser();
         String uploadedImageUrl = null;
-
 
         if (request.getImage() != null && !request.getImage().isEmpty()) {
             uploadedImageUrl = cloudinaryService.uploadFile(request.getImage());
@@ -119,13 +119,12 @@ public class CommunityService {
                 currentUser.getId(), post.getUser().getId()).isPresent());
         response.setUser(userInfo);
 
-        // Content Info
+        // ✅ رجعنا الـ ContentInfo الـ Object شغال هنا تمام ومتوافق مع الـ DTO
         PostResponse.ContentInfo contentInfo = new PostResponse.ContentInfo();
         contentInfo.setText(post.getContent());
         contentInfo.setMediaUrl(post.getImageUrl());
         contentInfo.setType(post.getImageUrl() != null ? "image" : null);
         response.setContent(contentInfo);
-
 
         PostResponse.StatsInfo statsInfo = new PostResponse.StatsInfo();
         statsInfo.setLikes(likeRepository.countByPostId(post.getId()));
@@ -133,10 +132,8 @@ public class CommunityService {
         statsInfo.setShares(0);
         response.setStats(statsInfo);
 
-
         response.setLiked(likeRepository.findByUserIdAndPostId(
                 currentUser.getId(), post.getId()).isPresent());
-
 
         response.setSaved(savedPostRepository.findByUserIdAndPostId(
                 currentUser.getId(), post.getId()).isPresent());
@@ -154,11 +151,11 @@ public class CommunityService {
         response.setCreatedAt(comment.getCreatedAt());
         return response;
     }
+
     public List<PostResponse> getPostsByUser(Long userId) {
         return postRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream().map(this::mapToPostResponse).collect(Collectors.toList());
     }
-
 
     public String toggleFollow(Long targetUserId) {
         User currentUser = getCurrentUser();
@@ -178,7 +175,6 @@ public class CommunityService {
             return "Followed";
         }
     }
-
 
     // Save Toggle
     public String toggleSave(Long postId) {
