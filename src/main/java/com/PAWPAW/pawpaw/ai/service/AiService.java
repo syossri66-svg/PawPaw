@@ -1,10 +1,14 @@
 package com.PAWPAW.pawpaw.ai.service;
 
+import com.PAWPAW.pawpaw.ai.entity.AiScan;
+import com.PAWPAW.pawpaw.ai.repository.AiScanRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -21,13 +25,16 @@ public class AiService {
     private String model;
 
     private final WebClient webClient;
+    private final AiScanRepository aiScanRepository;
 
-    public AiService(WebClient.Builder webClientBuilder) {
+
+    public AiService(WebClient.Builder webClientBuilder, AiScanRepository aiScanRepository) {
         this.webClient = webClientBuilder.build();
+        this.aiScanRepository = aiScanRepository;
     }
 
-    public Mono<String> getAiResponse(String description) {
 
+    public Mono<String> getAiResponse(String description) {
         Map<String, Object> body = Map.of(
                 "model", model,
                 "messages", List.of(Map.of("role", "user", "content", description))
@@ -41,5 +48,31 @@ public class AiService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
+    }
+
+
+    public Mono<AiScan> saveAndProcessVisualScan(Long petId, Mono<FilePart> filePartMono, String imageUrl, Long userId) {
+
+
+        AiScan mockScan = AiScan.builder()
+                .userId(userId)
+                .petId(petId)
+                .imageUrl(imageUrl != null ? imageUrl : "https://pawpaw-bucket.s3.amazonaws.com/mock-pet.jpg")
+                .status("COMPLETED")
+                .breedDetected("Persian Cat")
+                .hasIssue(true)
+                .issueName("Feline Dermatitis")
+                .confidence(94.2)
+                .treatmentTip("Keep the area clean and avoid human soaps. Schedule a clinic visit.")
+                .scanDate(LocalDateTime.now())
+                .build();
+
+
+        return aiScanRepository.save(mockScan);
+    }
+
+
+    public Mono<Long> getTotalScansCount() {
+        return aiScanRepository.count();
     }
 }
