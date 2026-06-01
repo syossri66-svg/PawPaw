@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public class PostResponse {
     private Long id;
     private UserInfo user;
-    private ContentInfo content;
+    private String content;
     private StatsInfo stats;
     private boolean isLiked;
     private boolean isSaved;

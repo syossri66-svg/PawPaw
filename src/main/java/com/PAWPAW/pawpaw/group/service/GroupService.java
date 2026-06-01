@@ -93,4 +93,30 @@ public class GroupService {
         response.setCreatedAt(group.getCreatedAt());
         return response;
     }
+
+    public GroupResponse getGroupById(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        GroupResponse response = mapToResponse(group);
+
+        // هنا هنجيب البوستات المربوطة بالجروب ده ونحولها لـ Response DTO
+        // تأكدي إن عندك في الـ group entity أو الـ postRepository ميثود بتجيب البوستات بالـ groupId
+        // على سبيل المثال لو البوستات مربوطة علطول بالجروب:
+        if (group.getPosts() != null) {
+            List<com.PAWPAW.pawpaw.community.dto.PostResponse> postResponses = group.getPosts().stream()
+                    .map(post -> {
+                        // هنا بتعملي المابينج بتاع البوست المعتاد عندك
+                        com.PAWPAW.pawpaw.community.dto.PostResponse pr = new com.PAWPAW.pawpaw.community.dto.PostResponse();
+                        pr.setId(post.getId());
+                        pr.setContent(post.getContent());
+                        // ... كملي باقي الفيلدز بتاعة البوست على حسب كود الـ Community عندك
+                        return pr;
+                    }).collect(Collectors.toList());
+
+            response.setPosts(postResponses);
+        }
+
+        return response;
+    }
 }

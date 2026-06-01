@@ -31,6 +31,10 @@ public class Group {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     private List<GroupMember> members;
 
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<com.PAWPAW.pawpaw.community.entity.Post> posts;
+
     private LocalDateTime createdAt;
 
     @PrePersist

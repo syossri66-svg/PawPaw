@@ -42,4 +42,10 @@ public class GroupController {
         groupService.leaveGroup(groupId);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupResponse> getGroupById(@PathVariable Long groupId) {
+        return ResponseEntity.ok(groupService.getGroupById(groupId));
+    }
+
+
 }

@@ -1,7 +1,9 @@
 package com.PAWPAW.pawpaw.group.dto;
 
+import com.PAWPAW.pawpaw.community.dto.PostResponse;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class GroupResponse {
@@ -13,4 +15,7 @@ public class GroupResponse {
     private String creatorName;
     private int membersCount;
     private LocalDateTime createdAt;
+    private List<PostResponse> posts;
+
+
 }
