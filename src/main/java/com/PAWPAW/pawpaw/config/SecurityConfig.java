@@ -59,18 +59,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-
         configuration.setAllowedHeaders(List.of("*"));
-
         configuration.setExposedHeaders(List.of("Authorization"));
-
-
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -85,16 +77,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
-                        .requestMatchers("/api/ai/**").permitAll()
+
+
+
+                        .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
+
+                        .requestMatchers("/api/ai/predict", "/api/ai/visual-scan", "/api/ai/stats").authenticated()
 
                         .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
 
-
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
-
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
