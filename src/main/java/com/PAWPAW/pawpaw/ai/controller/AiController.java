@@ -67,12 +67,12 @@ public class AiController {
             @RequestParam("petId") Long petId,
             @RequestParam(value = "imageUrl", required = false) String imageUrl) {
 
+
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = currentUser.getId();
 
 
-        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, null, imageUrl, userId).block();
-
+        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, imageUrl, userId);
 
         return ResponseEntity.ok(scanResult);
     }

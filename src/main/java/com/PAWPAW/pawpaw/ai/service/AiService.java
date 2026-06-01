@@ -3,11 +3,9 @@ package com.PAWPAW.pawpaw.ai.service;
 import com.PAWPAW.pawpaw.ai.entity.AiScan;
 import com.PAWPAW.pawpaw.ai.repository.AiScanRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,14 +47,15 @@ public class AiService {
                 .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
     }
 
-
-    public Mono<AiScan> saveAndProcessVisualScan(Long petId, Mono<FilePart> filePartMono, String imageUrl, Long userId) {
-
+    /**
+     * ✅ تعديل الميثود لتعمل بأسلوب صريح ومباشر (Synchronous) متوافق مع الـ JPA
+     */
+    public AiScan saveAndProcessVisualScan(Long petId, String imageUrl, Long userId) {
 
         AiScan mockScan = AiScan.builder()
                 .userId(userId)
                 .petId(petId)
-                .imageUrl(imageUrl)
+                .imageUrl(imageUrl != null ? imageUrl : "https://pawpaw-app.up.railway.app/uploads/default-pet.jpg")
                 .status("COMPLETED")
                 .breedDetected("Persian Cat")
                 .hasIssue(true)
@@ -67,13 +66,11 @@ public class AiService {
                 .build();
 
 
-        return Mono.fromCallable(() -> aiScanRepository.save(mockScan))
-                .subscribeOn(Schedulers.boundedElastic());
+        return aiScanRepository.save(mockScan);
     }
 
-
-    public Mono<Long> getTotalScansCount() {
-        return Mono.fromCallable(() -> aiScanRepository.count())
-                .subscribeOn(Schedulers.boundedElastic());
+   
+    public Long getTotalScansCount() {
+        return aiScanRepository.count();
     }
 }
