@@ -74,25 +74,31 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // إيقاف الـ CSRF تماماً لحماية الـ REST APIs والملفات الثابتة
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
+                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
                         .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
 
+
                         .requestMatchers("/api/ai/predict", "/api/ai/visual-scan", "/api/ai/stats").authenticated()
 
+
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
 
+
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
