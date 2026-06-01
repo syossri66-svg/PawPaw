@@ -12,8 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
+
 import java.util.Map;
 
 @RestController
@@ -37,14 +37,19 @@ public class AiController {
             String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
 
-            File uploadDir = new File("uploads");
+            String rootDir = System.getProperty("user.dir");
+            File uploadDir = new File(rootDir + File.separator + "uploads");
+
+
             if (!uploadDir.exists()) {
                 uploadDir.mkdirs();
             }
 
 
-            Path targetPath = Paths.get("uploads").resolve(filename);
-            file.transferTo(targetPath.toFile());
+            File targetFile = new File(uploadDir + File.separator + filename);
+
+
+            file.transferTo(targetFile);
 
 
             String fileUrl = "https://pawpaw-app.up.railway.app/uploads/" + filename;
@@ -54,6 +59,7 @@ public class AiController {
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to store file: " + e.getMessage()));
         }
     }
+
 
 
     @PostMapping("/visual-scan")
