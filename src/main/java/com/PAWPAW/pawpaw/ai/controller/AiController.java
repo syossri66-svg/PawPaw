@@ -60,7 +60,9 @@ public class AiController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Mono<Map<String, String>> uploadFile(@RequestPart("file") Mono<FilePart> filePartMono) {
+    public Mono<Map<String, String>> uploadFile(@RequestPart("file") FilePart file) {
+
+        System.out.println("Received file: " + file.filename());
 
         String mockImageUrl = "https://pawpaw-bucket.s3.amazonaws.com/uploaded-pet-image.jpg";
 
