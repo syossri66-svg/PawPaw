@@ -17,7 +17,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class User implements UserDetails {
 
     @Id
@@ -36,10 +35,10 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    @Builder.Default
     private boolean isVerified = false;
 
     private LocalDateTime createdAt;
-
 
     @PrePersist
     public void prePersist() {
@@ -69,14 +68,35 @@ public class User implements UserDetails {
     public boolean isEnabled() { return true; }
 
     @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
     private boolean isBanned = false;
 
     private String bio;
-    private String avatarUrl;
-    private String coverUrl;
+
+
+    private String profilePicture;
+    private String coverPhoto;
+
     private String location;
+
     @OneToMany(mappedBy = "sender")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Message> sentMessages;
 
+
+    public String getAvatarUrl() {
+        return this.profilePicture;
+    }
+
+    public String getCoverUrl() {
+        return this.coverPhoto;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.profilePicture = avatarUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverPhoto = coverUrl;
+    }
 }

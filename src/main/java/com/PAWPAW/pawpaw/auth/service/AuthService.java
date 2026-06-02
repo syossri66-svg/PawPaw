@@ -76,8 +76,8 @@ public class AuthService {
         response.setRole(user.getRole());
         response.setVerified(user.isVerified());
         response.setBio(user.getBio());
-        response.setAvatarUrl(user.getAvatarUrl());
-        response.setCoverUrl(user.getCoverUrl());
+        response.setProfilePicture(user.getProfilePicture());
+        response.setCoverPhoto(user.getCoverPhoto());
         response.setLocation(user.getLocation());
         return response;
     }
