@@ -20,7 +20,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PostController {
 
     @GetMapping("/user/{userId}")

@@ -58,10 +58,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000",
-                "https://your-frontend-domain.vercel.app"));
-
-
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
@@ -71,6 +71,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
@@ -78,42 +79,35 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
 
-
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
 
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
 
-
-
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
 
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
-
 
                         .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
                         .requestMatchers("/api/ai/predict", "/api/ai/visual-scan").authenticated()
                         .requestMatchers("/api/ai/stats").permitAll()
 
-
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER")
-                        .requestMatchers("/api/posts/**").hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER")
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
+                        .requestMatchers("/api/posts/**")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
 
-
-                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER")
-
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
 
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
-
 
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
                         .anyRequest().authenticated()
