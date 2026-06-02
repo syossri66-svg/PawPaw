@@ -6,6 +6,7 @@ import com.PAWPAW.pawpaw.community.dto.CommentRequest;
 import com.PAWPAW.pawpaw.community.dto.CommentResponse;
 import com.PAWPAW.pawpaw.community.dto.PostResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -55,17 +56,15 @@ public class PostController {
         return ResponseEntity.ok(List.of(mockPost));
     }
 
-    @PostMapping
+    // ✅ Fixed: removed @RequestBody — can't mix with @RequestParam in multipart
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createNewFeedPost(
             @RequestParam(value = "content", required = false) String content,
             @RequestParam(value = "text", required = false) String text,
-            @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(value = "file", required = false) MultipartFile file1,
             @RequestParam(value = "image", required = false) MultipartFile file2) throws IOException {
 
-        String finalContent = content != null ? content :
-                text != null ? text :
-                        body != null ? (String) body.get("content") : null;
+        String finalContent = content != null ? content : text;
 
         MultipartFile finalFile = (file1 != null) ? file1 : file2;
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
