@@ -18,7 +18,7 @@ public class PostResponse {
     private AuthorDto author;
     private long likesCount;
     private boolean liked;
-    private List<CommentDto> comments;
+    private List<CommentResponse> comments;
 
     private String title;
     private UserInfo user;
