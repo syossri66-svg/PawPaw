@@ -5,7 +5,6 @@ import com.PAWPAW.pawpaw.community.dto.CommentRequest;
 import com.PAWPAW.pawpaw.community.dto.CommentResponse;
 import com.PAWPAW.pawpaw.community.dto.PostResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +24,6 @@ public class PostController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
 
-        // 1️⃣ بناء الكومنتات التجريبية باستخدام الـ CommentResponse الجديد
         CommentResponse mockComment1 = new CommentResponse();
         mockComment1.setId(1L);
         mockComment1.setContent("So nice! 🐾");
@@ -38,7 +36,6 @@ public class PostController {
         mockComment2.setUserName("john_doe");
         mockComment2.setCreatedAt(LocalDateTime.now());
 
-        // 2️⃣ بناء البوست وتمرير الكومنتات المحدثة له
         PostResponse mockPost = PostResponse.builder()
                 .id("post_111")
                 .author(PostResponse.AuthorDto.builder()
@@ -50,17 +47,24 @@ public class PostController {
                 .mediaUrl("https://pawpaw-app.up.railway.app/uploads/default-cover.jpg")
                 .likesCount(25)
                 .liked(false)
-                .comments(List.of(mockComment1, mockComment2)) // 👈 كده هيقرا صح لأننا وحدنا النوع في الـ DTO
+                .comments(List.of(mockComment1, mockComment2))
                 .build();
 
         return ResponseEntity.ok(List.of(mockPost));
     }
 
-    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @PostMapping
     public ResponseEntity<PostResponse> createNewFeedPost(
-            @RequestParam("content") String content,
+            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "text", required = false) String text,
+            @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(value = "file", required = false) MultipartFile file1,
             @RequestParam(value = "image", required = false) MultipartFile file2) throws IOException {
+
+        // خد الـ content من أي مصدر
+        String finalContent = content != null ? content :
+                text != null ? text :
+                        body != null ? (String) body.get("content") : null;
 
         MultipartFile finalFile = (file1 != null) ? file1 : file2;
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -87,7 +91,7 @@ public class PostController {
                         .profilePicture(currentUser.getAvatarUrl() != null ? currentUser.getAvatarUrl() : "https://pawpaw-app.up.railway.app/uploads/default-avatar.jpg")
                         .build())
                 .createdAt(LocalDateTime.now())
-                .content(content)
+                .content(finalContent)
                 .mediaUrl(fileUrl)
                 .likesCount(0)
                 .liked(false)
