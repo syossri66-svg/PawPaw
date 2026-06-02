@@ -70,7 +70,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
@@ -79,6 +78,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
 
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/**").authenticated() // حل مشكلة تعديل الـ Avatar والـ Cover
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
@@ -91,21 +97,17 @@ public class SecurityConfig {
 
 
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll() // جلب البوستات متاح للجميع
-                        .requestMatchers("/api/posts/**").authenticated() // إنشاء البوستات يحتاج Token
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated() // إنشاء البوستات يحتاج Token (حل الـ 403)
+                        .requestMatchers("/api/posts/**").authenticated()
 
 
-                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
-                        .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-
-                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasRole("PET_OWNER")
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts").hasAnyRole("PET_OWNER", "USER")
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
