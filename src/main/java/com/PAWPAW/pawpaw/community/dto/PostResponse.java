@@ -27,6 +27,14 @@ public class PostResponse {
     private boolean saved;
 
 
+    public void setContent(ContentInfo contentInfo) {
+        this.contentInfo = contentInfo;
+        if (contentInfo != null) {
+            this.content = contentInfo.getText();
+            this.mediaUrl = contentInfo.getMediaUrl();
+        }
+    }
+
     public void setId(Long id) {
         this.id = id != null ? id.toString() : null;
     }
@@ -34,7 +42,6 @@ public class PostResponse {
     public void setSaved(boolean saved) {
         this.saved = saved;
     }
-
 
 
     @Data
@@ -71,6 +78,7 @@ public class PostResponse {
     public static class ContentInfo {
         private String text;
         private String mediaUrl;
+        private String type;
     }
 
     @Data
@@ -78,8 +86,14 @@ public class PostResponse {
     @AllArgsConstructor
     @Builder
     public static class StatsInfo {
-        private long likesCount;
-        private long commentsCount;
-        private long sharesCount;
+
+        private long likes;
+        private long comments;
+        private long shares;
+
+
+        public long getLikesCount() { return this.likes; }
+        public long getCommentsCount() { return this.comments; }
+        public long getSharesCount() { return this.shares; }
     }
 }
