@@ -97,15 +97,12 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/pet-report/**").authenticated()
 
+                        // ✅ Fixed: GET is public, everything else requires login
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/posts/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
-                        .requestMatchers("/api/posts/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
 
-                        .requestMatchers(HttpMethod.POST, "/api/community/posts")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
-                        .requestMatchers("/api/posts/**").permitAll()
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
