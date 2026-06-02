@@ -89,7 +89,8 @@ public class SecurityConfig {
                         .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
 
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
-
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/images/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
                         .requestMatchers("/api/ai/predict", "/api/ai/visual-scan").authenticated()
                         .requestMatchers("/api/ai/stats").permitAll()
