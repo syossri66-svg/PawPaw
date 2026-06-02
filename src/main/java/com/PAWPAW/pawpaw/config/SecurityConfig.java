@@ -60,7 +60,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
 
-        // 💡 الـ PATCH مسموح بها هنا صراحةً لمنع مشاكل الـ CORS مع الفرونت إند
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
@@ -84,7 +84,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
 
-                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/**").authenticated() // حل مشكلة تعديل الـ Avatar والـ Cover
+                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me").hasAnyRole("PET_OWNER", "USER")
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
@@ -96,9 +96,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/pet-report/**").authenticated()
 
 
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll() // جلب البوستات متاح للجميع
-                        .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated() // إنشاء البوستات يحتاج Token (حل الـ 403)
-                        .requestMatchers("/api/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyRole("PET_OWNER", "USER")
+                        .requestMatchers("/api/posts/**").hasAnyRole("PET_OWNER", "USER")
 
 
                         .requestMatchers(HttpMethod.POST, "/api/community/posts").hasAnyRole("PET_OWNER", "USER")
