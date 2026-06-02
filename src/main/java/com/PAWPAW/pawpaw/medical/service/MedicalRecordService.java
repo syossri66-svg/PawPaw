@@ -56,7 +56,7 @@ public class MedicalRecordService {
                 .build();
         MedicalRecord saved = medicalRecordRepository.save(record);
 
-        // حفظ الـ medications
+
         if (request.getMedications() != null) {
             request.getMedications().forEach(m -> {
                 Medication med = Medication.builder()
@@ -108,13 +108,13 @@ public class MedicalRecordService {
         response.setDosage(record.getDosage());
         response.setDuration(record.getDuration());
         response.setReportUrl(record.getReportUrl());
-// Pet snapshot
+
         response.setPetPhotoUrl(record.getPet().getPhotoUrl());
         response.setPetSpecies(record.getPet().getSpecies());
         response.setPetBreed(record.getPet().getBreed());
         response.setPetWeight(record.getWeight());
 
-        // Pet Info
+
         response.setPetId(record.getPet().getId());
         response.setPetName(record.getPet().getName());
         response.setPetSpecies(record.getPet().getSpecies());
