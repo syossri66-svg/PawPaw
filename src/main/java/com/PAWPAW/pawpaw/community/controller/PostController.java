@@ -56,7 +56,7 @@ public class PostController {
         return ResponseEntity.ok(List.of(mockPost));
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<PostResponse> createNewFeedPost(
             @RequestParam("content") String content,
             @RequestParam(value = "file", required = false) MultipartFile file1,
