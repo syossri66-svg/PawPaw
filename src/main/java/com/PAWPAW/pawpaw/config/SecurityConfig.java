@@ -83,8 +83,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
 
 
-                        .requestMatchers("/api/ai/predict", "/api/ai/visual-scan", "/api/ai/stats").authenticated()
-
+                        .requestMatchers("/api/ai/predict", "/api/ai/visual-scan").authenticated()
+                        .requestMatchers("/api/ai/stats").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()

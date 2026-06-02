@@ -47,9 +47,7 @@ public class AiService {
                 .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
     }
 
-    /**
-     * ✅ تعديل الميثود لتعمل بأسلوب صريح ومباشر (Synchronous) متوافق مع الـ JPA
-     */
+
     public AiScan saveAndProcessVisualScan(Long petId, String imageUrl, Long userId) {
 
         AiScan mockScan = AiScan.builder()
@@ -69,7 +67,7 @@ public class AiService {
         return aiScanRepository.save(mockScan);
     }
 
-   
+
     public Long getTotalScansCount() {
         return aiScanRepository.count();
     }
