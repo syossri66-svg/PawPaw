@@ -8,7 +8,7 @@ import java.util.List;
 public class PetReportService {
 
     public PetReportResponse generatePetReport(Long petId) {
-        // 💡 حالياً بنبني الداتا الـ Mock المطلوبة بالملّي عشان الفرونت إند يربط شاشته فوراً
+
         PetReportResponse.PetDataDto petData = PetReportResponse.PetDataDto.builder()
                 .name("Leo")
                 .age("Two years")
