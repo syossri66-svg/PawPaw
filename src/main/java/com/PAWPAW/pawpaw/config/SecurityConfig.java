@@ -78,13 +78,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
 
-                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
-                        .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
 
-                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me").hasAnyRole("PET_OWNER", "USER")
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
+
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar").hasAnyRole("PET_OWNER", "USER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/cover").hasAnyRole("PET_OWNER", "USER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/**").hasAnyRole("PET_OWNER", "USER")
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
@@ -99,9 +103,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyRole("PET_OWNER", "USER")
                         .requestMatchers("/api/posts/**").hasAnyRole("PET_OWNER", "USER")
-
-
                         .requestMatchers(HttpMethod.POST, "/api/community/posts").hasAnyRole("PET_OWNER", "USER")
+
+
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
