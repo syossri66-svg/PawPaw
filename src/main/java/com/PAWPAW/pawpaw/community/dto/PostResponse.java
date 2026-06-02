@@ -1,40 +1,40 @@
 package com.PAWPAW.pawpaw.community.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostResponse {
-    private Long id;
-    private UserInfo user;
-
-    // ✅ رجعناه كائن عشان الفرونت إند ميتشقلبش، والـ Getter والـ Setter هيتولدوا بـ Lombok تلقائي
-    private ContentInfo content;
-
-    private StatsInfo stats;
-    private boolean isLiked;
-    private boolean isSaved;
+    private String id;
+    private AuthorDto author;
     private LocalDateTime createdAt;
+    private String content;
+    private String mediaUrl;
+    private int likesCount;
+    private boolean liked;
+    private List<CommentDto> comments;
 
     @Data
-    public static class UserInfo {
-        private Long id;
-        private String name;
-        private String avatar;
-        private boolean isFollowing;
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuthorDto {
+        private String username;
+        private String profilePicture;
     }
 
     @Data
-    public static class ContentInfo {
-        private String text;
-        private String mediaUrl;
-        private String type;
-    }
-
-    @Data
-    public static class StatsInfo {
-        private int likes;
-        private int comments;
-        private int shares;
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentDto {
+        private String content;
     }
 }

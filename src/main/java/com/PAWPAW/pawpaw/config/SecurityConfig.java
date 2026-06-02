@@ -58,9 +58,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // 💡 الـ PATCH مسموح بها هنا صراحةً لمنع مشاكل الـ CORS مع الفرونت إند
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
@@ -74,18 +75,25 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // إيقاف الـ CSRF تماماً لحماية الـ REST APIs والملفات الثابتة
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+
 
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
 
                         .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
-
-
                         .requestMatchers("/api/ai/predict", "/api/ai/visual-scan").authenticated()
                         .requestMatchers("/api/ai/stats").permitAll()
+
+
                         .requestMatchers("/api/pet-report/**").authenticated()
+
+
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll() // جلب البوستات متاح للجميع
+                        .requestMatchers("/api/posts/**").authenticated() // إنشاء البوستات يحتاج Token
+
+
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
@@ -97,7 +105,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
 
                         .anyRequest().authenticated()
                 )

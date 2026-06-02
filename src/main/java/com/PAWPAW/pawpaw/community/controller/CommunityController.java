@@ -73,4 +73,5 @@ public class CommunityController {
                                                           @Valid @RequestBody CommentRequest request) {
         return ResponseEntity.ok(communityService.replyToComment(commentId, request));
     }
+
 }
