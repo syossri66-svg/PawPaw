@@ -1,40 +1,85 @@
 package com.PAWPAW.pawpaw.community.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PostResponse {
+
+
     private String id;
-    private AuthorDto author;
-    private LocalDateTime createdAt;
     private String content;
     private String mediaUrl;
-    private int likesCount;
+    private LocalDateTime createdAt;
+    private AuthorDto author;
+    private long likesCount;
     private boolean liked;
     private List<CommentDto> comments;
 
+    private String title;
+    private UserInfo user;
+    private ContentInfo contentInfo;
+    private StatsInfo stats;
+    private boolean saved;
+
+
+    public void setId(Long id) {
+        this.id = id != null ? id.toString() : null;
+    }
+
+    public void setSaved(boolean saved) {
+        this.saved = saved;
+    }
+
+
+
     @Data
-    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class AuthorDto {
         private String username;
         private String profilePicture;
     }
 
     @Data
-    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CommentDto {
-        private String content;
+        private String text;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UserInfo {
+        private Long id;
+        private String name;
+        private String avatar;
+        private boolean following;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ContentInfo {
+        private String text;
+        private String mediaUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StatsInfo {
+        private long likesCount;
+        private long commentsCount;
+        private long sharesCount;
     }
 }
