@@ -2,6 +2,7 @@ package com.PAWPAW.pawpaw.community.service;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import com.PAWPAW.pawpaw.common.CloudinaryService;
 import com.PAWPAW.pawpaw.community.dto.*;
 import com.PAWPAW.pawpaw.community.entity.*;
 import com.PAWPAW.pawpaw.community.repository.*;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,8 +36,12 @@ public class CommunityService {
         User user = getCurrentUser();
         String uploadedImageUrl = null;
 
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
-            uploadedImageUrl = cloudinaryService.uploadFile(request.getImage());
+        try {
+            if (request.getImage() != null && !request.getImage().isEmpty()) {
+                uploadedImageUrl = cloudinaryService.uploadFile(request.getImage());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload image", e);
         }
 
         Post post = Post.builder()
@@ -58,7 +64,6 @@ public class CommunityService {
         postRepository.deleteById(postId);
     }
 
-    // Comments
     public CommentResponse addComment(Long postId, CommentRequest request) {
         User user = getCurrentUser();
         Post post = postRepository.findById(postId)
@@ -82,7 +87,6 @@ public class CommunityService {
         commentRepository.deleteById(commentId);
     }
 
-    // Likes
     public String toggleLike(Long postId) {
         User user = getCurrentUser();
         Post post = postRepository.findById(postId)
@@ -110,7 +114,6 @@ public class CommunityService {
         response.setId(post.getId());
         response.setCreatedAt(post.getCreatedAt());
 
-        // User Info
         PostResponse.UserInfo userInfo = new PostResponse.UserInfo();
         userInfo.setId(post.getUser().getId());
         userInfo.setName(post.getUser().getFullName());
@@ -119,7 +122,6 @@ public class CommunityService {
                 currentUser.getId(), post.getUser().getId()).isPresent());
         response.setUser(userInfo);
 
-        // ✅ رجعنا الـ ContentInfo الـ Object شغال هنا تمام ومتوافق مع الـ DTO
         PostResponse.ContentInfo contentInfo = new PostResponse.ContentInfo();
         contentInfo.setText(post.getContent());
         contentInfo.setMediaUrl(post.getImageUrl());
@@ -176,7 +178,6 @@ public class CommunityService {
         }
     }
 
-    // Save Toggle
     public String toggleSave(Long postId) {
         User user = getCurrentUser();
         Post post = postRepository.findById(postId)
@@ -193,7 +194,6 @@ public class CommunityService {
         }
     }
 
-    // Get Saved Posts
     public List<PostResponse> getSavedPosts() {
         User user = getCurrentUser();
         return savedPostRepository.findByUserId(user.getId())
@@ -202,7 +202,6 @@ public class CommunityService {
                 .collect(Collectors.toList());
     }
 
-    // Reply to Comment
     public CommentResponse replyToComment(Long parentId, CommentRequest request) {
         User user = getCurrentUser();
         Comment parent = commentRepository.findById(parentId)
