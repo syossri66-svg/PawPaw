@@ -105,7 +105,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/community/posts")
                         .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
-
+                        .requestMatchers("/api/posts/**").permitAll()
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
