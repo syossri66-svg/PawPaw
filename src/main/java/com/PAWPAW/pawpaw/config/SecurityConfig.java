@@ -86,7 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
 
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
 
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
@@ -98,18 +98,18 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/posts/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
                         .requestMatchers("/api/posts/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
 
                         .requestMatchers(HttpMethod.POST, "/api/community/posts")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_USER", "PET_OWNER", "USER", "Pet Lover")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
 
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
 
-                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
