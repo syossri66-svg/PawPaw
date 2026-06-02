@@ -61,7 +61,7 @@ public class AuthController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // 2️⃣ تعديل البيانات الشخصية الشخصية (PATCH /api/auth/me)
+
     @PatchMapping("/me")
     public ResponseEntity<UserResponse> updateProfileDetails(@RequestBody Map<String, Object> updates) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -73,41 +73,75 @@ public class AuthController {
         return ResponseEntity.ok(mapToResponse(currentUser));
     }
 
-    // 3️⃣ تعديل الـ Avatar وصور الملفات (PATCH /api/auth/me/avatar)
-    @PatchMapping("/me/avatar")
-    public ResponseEntity<Map<String, String>> updateAvatar(@RequestParam("avatar") MultipartFile file) throws IOException {
+
+    @PatchMapping(value = "/me/avatar", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> updateAvatar(@RequestParam(value = "file", required = false) MultipartFile file,
+                                                            @RequestParam(value = "avatar", required = false) MultipartFile alternateFile) throws IOException {
+
+        MultipartFile finalFile = (file != null) ? file : alternateFile;
+
+        if (finalFile == null || finalFile.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
+        }
+
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        String filename = System.currentTimeMillis() + "_" + finalFile.getOriginalFilename();
         String rootDir = System.getProperty("user.dir");
-        File targetFile = new File(rootDir + File.separator + "uploads" + File.separator + filename);
-        file.transferTo(targetFile);
+
+        File uploadDir = new File(rootDir + File.separator + "uploads");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        File targetFile = new File(uploadDir + File.separator + filename);
+        finalFile.transferTo(targetFile);
 
         String fileUrl = "https://pawpaw-app.up.railway.app/uploads/" + filename;
         currentUser.setAvatarUrl(fileUrl);
         userRepository.save(currentUser);
 
-        return ResponseEntity.ok(Map.of("profilePicture", fileUrl));
+        return ResponseEntity.ok(Map.of(
+                "profilePicture", fileUrl,
+                "message", "Avatar updated successfully"
+        ));
     }
 
-    // 3️⃣ تعديل الـ Cover وصور الخلفية (PATCH /api/auth/me/cover)
-    @PatchMapping("/me/cover")
-    public ResponseEntity<Map<String, String>> updateCover(@RequestParam("cover") MultipartFile file) throws IOException {
+
+    @PatchMapping(value = "/me/cover", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> updateCover(@RequestParam(value = "file", required = false) MultipartFile file,
+                                                           @RequestParam(value = "cover", required = false) MultipartFile alternateFile) throws IOException {
+
+        MultipartFile finalFile = (file != null) ? file : alternateFile;
+
+        if (finalFile == null || finalFile.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
+        }
+
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        String filename = System.currentTimeMillis() + "_" + finalFile.getOriginalFilename();
         String rootDir = System.getProperty("user.dir");
-        File targetFile = new File(rootDir + File.separator + "uploads" + File.separator + filename);
-        file.transferTo(targetFile);
+
+        File uploadDir = new File(rootDir + File.separator + "uploads");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        File targetFile = new File(uploadDir + File.separator + filename);
+        finalFile.transferTo(targetFile);
 
         String fileUrl = "https://pawpaw-app.up.railway.app/uploads/" + filename;
         currentUser.setCoverUrl(fileUrl);
         userRepository.save(currentUser);
 
-        return ResponseEntity.ok(Map.of("coverPhoto", fileUrl));
+        return ResponseEntity.ok(Map.of(
+                "coverPhoto", fileUrl,
+                "message", "Cover updated successfully"
+        ));
     }
 
-    // 🎯 تحديث ميثود الـ Mapping لتملأ كل الداتا اللي منة مستنياها تلقائياً
+
     private UserResponse mapToResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
@@ -118,11 +152,9 @@ public class AuthController {
         response.setBio(user.getBio());
         response.setLocation(user.getLocation() != null ? user.getLocation() : "Not Specified");
 
-
         response.setUsername(user.getEmail());
         response.setProfilePicture(user.getAvatarUrl() != null ? user.getAvatarUrl() : "https://pawpaw-app.up.railway.app/uploads/default-avatar.jpg");
         response.setCoverPhoto(user.getCoverUrl() != null ? user.getCoverUrl() : "https://pawpaw-app.up.railway.app/uploads/default-cover.jpg");
-
 
         response.setBorn("2004-05-12");
         response.setStatus("Single");
