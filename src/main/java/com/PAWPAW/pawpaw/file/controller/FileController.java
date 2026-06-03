@@ -1,6 +1,6 @@
 package com.PAWPAW.pawpaw.file.controller;
 
-import com.PAWPAW.pawpaw.file.FileStorageService;
+import com.PAWPAW.pawpaw.file.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
