@@ -2,6 +2,8 @@ package com.PAWPAW.pawpaw.medical.controller;
 
 import com.PAWPAW.pawpaw.medical.dto.MedicalRecordRequest;
 import com.PAWPAW.pawpaw.medical.dto.MedicalRecordResponse;
+import com.PAWPAW.pawpaw.medical.dto.MedicalRecordTimelineResponse;
+import com.PAWPAW.pawpaw.medical.dto.PetMedicalFullResponse;
 import com.PAWPAW.pawpaw.medical.service.MedicalRecordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +19,13 @@ public class MedicalRecordController {
 
     private final MedicalRecordService medicalRecordService;
 
+
     @PostMapping
     public ResponseEntity<MedicalRecordResponse> addRecord(
             @Valid @RequestBody MedicalRecordRequest request) {
         return ResponseEntity.ok(medicalRecordService.addRecord(request));
     }
+
 
     @GetMapping("/pet/{petId}")
     public ResponseEntity<List<MedicalRecordResponse>> getPetRecords(
@@ -29,13 +33,38 @@ public class MedicalRecordController {
         return ResponseEntity.ok(medicalRecordService.getPetRecords(petId));
     }
 
+
     @GetMapping("/vet")
     public ResponseEntity<List<MedicalRecordResponse>> getMyVetRecords() {
         return ResponseEntity.ok(medicalRecordService.getMyVetRecords());
     }
+
+
     @GetMapping("/{recordId}")
     public ResponseEntity<MedicalRecordResponse> getRecordById(
             @PathVariable Long recordId) {
         return ResponseEntity.ok(medicalRecordService.getRecordById(recordId));
+    }
+
+
+    @PatchMapping("/record/{recordId}")
+    public ResponseEntity<MedicalRecordResponse> updateRecord(
+            @PathVariable Long recordId,
+            @RequestBody MedicalRecordRequest request) {
+        return ResponseEntity.ok(medicalRecordService.updateRecord(recordId, request));
+    }
+
+
+    @GetMapping("/pet/{petId}/timeline")
+    public ResponseEntity<List<MedicalRecordTimelineResponse>> getPetTimeline(
+            @PathVariable Long petId) {
+        return ResponseEntity.ok(medicalRecordService.getPetTimeline(petId));
+    }
+
+
+    @GetMapping("/pet/{petId}/full")
+    public ResponseEntity<PetMedicalFullResponse> getPetFullMedical(
+            @PathVariable Long petId) {
+        return ResponseEntity.ok(medicalRecordService.getPetFullMedical(petId));
     }
 }

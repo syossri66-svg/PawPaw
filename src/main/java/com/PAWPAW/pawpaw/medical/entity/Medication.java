@@ -1,6 +1,5 @@
 package com.PAWPAW.pawpaw.medical.entity;
 
-import com.PAWPAW.pawpaw.medical.entity.MedicalRecord;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -2,10 +2,7 @@ package com.PAWPAW.pawpaw.medical.service;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
-import com.PAWPAW.pawpaw.medical.dto.MedicalRecordRequest;
-import com.PAWPAW.pawpaw.medical.dto.MedicalRecordResponse;
-import com.PAWPAW.pawpaw.medical.dto.MedicationResponse;
-import com.PAWPAW.pawpaw.medical.dto.PetMedicalFullResponse;
+import com.PAWPAW.pawpaw.medical.dto.*;
 import com.PAWPAW.pawpaw.medical.entity.MedicalRecord;
 import com.PAWPAW.pawpaw.medical.entity.Medication;
 import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
@@ -203,5 +200,18 @@ public class MedicalRecordService {
                     return med;
                 }).collect(Collectors.toList()));
         return response;
+    }
+    public List<MedicalRecordTimelineResponse> getPetTimeline(Long petId) {
+        return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
+                .stream()
+                .map(record -> {
+                    MedicalRecordTimelineResponse res = new MedicalRecordTimelineResponse();
+                    res.setId(record.getId());
+                    res.setVisitTitle(record.getVisitTitle());
+                    res.setClinicName(record.getClinicName());
+                    res.setVisitDate(record.getVisitDate());
+                    return res;
+                })
+                .collect(Collectors.toList());
     }
 }
