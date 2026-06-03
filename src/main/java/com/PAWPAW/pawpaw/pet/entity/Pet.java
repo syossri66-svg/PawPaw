@@ -30,7 +30,9 @@ public class Pet {
     private String photoUrl;
 
     private String medicalNotes;
+
     private String healthStatus;
+
     private String uniqueId;
 
     @Enumerated(EnumType.STRING)
@@ -39,6 +41,8 @@ public class Pet {
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
+
+    private Double weight;
 
     private LocalDateTime createdAt;
 
