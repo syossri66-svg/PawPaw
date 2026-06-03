@@ -98,16 +98,21 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // ✅ Fixed: GET is public, everything else requires login
-                        .requestMatchers(HttpMethod.GET, "/api/vets/**").permitAll()
+                        // ✅ Posts
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
 
+                        // ✅ Vets — GET public, rest requires auth
+                        .requestMatchers(HttpMethod.GET, "/api/vets/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/vets/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/vets/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/vets/**").authenticated()
+
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
-                        .requestMatchers("/api/vets/**", "/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
+                        .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
 
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
