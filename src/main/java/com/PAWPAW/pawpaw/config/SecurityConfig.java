@@ -98,16 +98,21 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // ✅ Posts
+
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
 
-                        // ✅ Vets — specific public endpoints, rest requires auth
+
                         .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/{id}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/vets/profile").hasAnyAuthority("ROLE_VET")
+                        .requestMatchers(HttpMethod.GET, "/api/vets/profile").hasAnyAuthority("ROLE_VET")
+                        .requestMatchers(HttpMethod.GET, "/api/vets/dashboard").hasAnyAuthority("ROLE_VET")
+                        .requestMatchers(HttpMethod.PATCH, "/api/vets/{id}").hasAnyAuthority("ROLE_VET")
+                        .requestMatchers(HttpMethod.POST, "/api/vets/{id}/certificate").hasAnyAuthority("ROLE_VET")
                         .requestMatchers("/api/vets/**").authenticated()
 
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
