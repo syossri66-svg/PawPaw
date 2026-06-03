@@ -104,11 +104,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
 
-                        // ✅ Vets — GET public, rest requires auth
-                        .requestMatchers(HttpMethod.GET, "/api/vets/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/vets/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/vets/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/vets/**").authenticated()
+                        // ✅ Vets — specific public endpoints, rest requires auth
+                        .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/vets/{id}").permitAll()
+                        .requestMatchers("/api/vets/**").authenticated()
 
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
