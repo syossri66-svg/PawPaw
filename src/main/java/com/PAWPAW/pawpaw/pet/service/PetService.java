@@ -15,17 +15,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-
-
 @Service
 @RequiredArgsConstructor
 public class PetService {
 
-
     private final PetRepository petRepository;
     private final UserRepository userRepository;
     private final MedicalRecordRepository medicalRecordRepository;
+
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
@@ -35,12 +32,9 @@ public class PetService {
     public PetResponse addPet(PetRequest request) {
         User owner = getCurrentUser();
 
-
         if (owner.getRole() == UserRole.ROLE_VET) {
             throw new RuntimeException("Vets cannot add pets");
         }
-
-
 
         Pet pet = Pet.builder()
                 .name(request.getName())
@@ -64,6 +58,20 @@ public class PetService {
         return petRepository.findByOwnerId(owner.getId())
                 .stream()
                 .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ ميثود مخصصة للفرونت إند بترجع لستة خفيفة (id و name بس) عشان اللود
+    public List<java.util.Map<String, Object>> getMyPetsLight() {
+        User owner = getCurrentUser();
+        return petRepository.findByOwnerId(owner.getId())
+                .stream()
+                .map(pet -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", pet.getId());
+                    map.put("name", pet.getName());
+                    return map;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -110,8 +118,6 @@ public class PetService {
         response.setHealthStatus(pet.getHealthStatus());
         response.setUniqueId(pet.getUniqueId());
 
-
-
         medicalRecordRepository
                 .findByPetIdOrderByVisitDateDesc(pet.getId())
                 .stream()
@@ -129,5 +135,35 @@ public class PetService {
         return response;
     }
 
+    // ✅ ميثود تاريخ الوزن مفرمتة بالشهور بدون نول
+    public List<java.util.Map<String, Object>> getWeightHistory(Long petId) {
+        return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
+                .stream()
+                .filter(record -> record.getWeight() != null && record.getVisitDate() != null)
+                .map(record -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    String monthName = record.getVisitDate().getMonth().getDisplayName(
+                            java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH);
+                    map.put("month", monthName);
+                    map.put("weight", record.getWeight());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
 
+    // ✅ ميثود سجل الزيارات الطبية مفرمتة بـ Snake Case والروابط المطلوبة في شاشة الـ UI
+    public List<java.util.Map<String, Object>> getPetMedicalRecordsForFront(Long petId) {
+        return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
+                .stream()
+                .map(record -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", record.getId());
+                    map.put("vet_name", record.getVet() != null ? record.getVet().getFullName() : "Unknown Vet");
+                    map.put("date", record.getVisitDate());
+                    map.put("diagnosis_link", "/api/medical/" + record.getId());
+                    map.put("record_link", "/api/medical/" + record.getId());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
 }

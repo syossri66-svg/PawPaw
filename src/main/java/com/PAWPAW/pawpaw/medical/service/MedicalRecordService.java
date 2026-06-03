@@ -98,7 +98,6 @@ public class MedicalRecordService {
         return mapToResponse(record);
     }
 
-
     public List<MedicalRecordTimelineResponse> getPetTimeline(Long petId) {
         return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
                 .stream()
@@ -112,7 +111,6 @@ public class MedicalRecordService {
                 })
                 .collect(Collectors.toList());
     }
-
 
     public PetMedicalFullResponse getPetFullMedical(Long petId) {
         Pet pet = petRepository.findById(petId)
@@ -137,7 +135,6 @@ public class MedicalRecordService {
         return response;
     }
 
-
     @Transactional
     public MedicalRecordResponse updateRecord(Long recordId, MedicalRecordRequest request) {
         MedicalRecord record = medicalRecordRepository.findById(recordId)
@@ -161,7 +158,6 @@ public class MedicalRecordService {
         if (request.getDuration() != null) record.setDuration(request.getDuration());
         if (request.getReportUrl() != null) record.setReportUrl(request.getReportUrl());
 
-        // ✅ تم تعديل المنطق هنا ليتناسب مع الـ Partial Update من غير تكرار الأدوية القديمة
         if (request.getMedications() != null) {
             record.getMedications().clear();
             request.getMedications().forEach(m -> {
@@ -188,7 +184,10 @@ public class MedicalRecordService {
         response.setPetBreed(record.getPet().getBreed());
         response.setPetGender(record.getPet().getGender() != null ? record.getPet().getGender().toString() : null);
         response.setPetPhotoUrl(record.getPet().getPhotoUrl());
-        response.setPetWeight(record.getPet().getWeight()); // تم ربط الحقل بعد تصليحه في الـ Entity
+
+        // ✅ تم تعديل السطر هنا ليقرأ الـ Weight من الـ Record مباشرة لمنع الـ Compile Error
+        response.setPetWeight(record.getWeight());
+
         response.setVetId(record.getVet().getId());
         response.setVetName(record.getVet().getFullName());
         response.setClinicName(record.getClinicName());
