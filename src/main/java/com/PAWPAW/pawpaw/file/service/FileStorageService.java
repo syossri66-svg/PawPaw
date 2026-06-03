@@ -1,4 +1,4 @@
-package com.PAWPAW.pawpaw.file;
+package com.PAWPAW.pawpaw.file.service;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;

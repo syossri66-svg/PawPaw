@@ -61,7 +61,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
-                "https://pawpaw-app-cb-ay9nv29jd8tt8etcicz8v2.streamlit.app"
+                "https://pawpaw-app-cb-ay9nv29jd8tt8etcicz8v2.streamlit.app",
+                "https://pawpaw-app.up.railway.app"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
