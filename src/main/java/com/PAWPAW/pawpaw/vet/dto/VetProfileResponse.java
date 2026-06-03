@@ -1,6 +1,7 @@
 package com.PAWPAW.pawpaw.vet.dto;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class VetProfileResponse {
@@ -18,4 +19,16 @@ public class VetProfileResponse {
     private Double longitude;
     private Integer yearsOfExperience;
     private long totalPatients;
+
+
+    private List<CertificationDto> certifications;
+    private List<AppointmentDto> appointments;
+
+    @Data
+    public static class AppointmentDto {
+        private Long id;
+        private String petName;
+        private String date;
+        private String status;
+    }
 }

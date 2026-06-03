@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.vet.controller;
 
+import com.PAWPAW.pawpaw.vet.dto.CertificationDto;
 import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileRequest;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
@@ -30,6 +31,28 @@ public class VetController {
         return ResponseEntity.ok(vetService.getMyProfile());
     }
 
+
+    @GetMapping("/{id}")
+    public ResponseEntity<VetProfileResponse> getVetById(@PathVariable Long id) {
+        return ResponseEntity.ok(vetService.getVetById(id));
+    }
+
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<VetProfileResponse> updateVetById(
+            @PathVariable Long id,
+            @RequestBody VetProfileRequest request) {
+        return ResponseEntity.ok(vetService.updateVetById(id, request));
+    }
+
+
+    @PostMapping("/{id}/certificate")
+    public ResponseEntity<CertificationDto> addCertificate(
+            @PathVariable Long id,
+            @RequestBody CertificationDto dto) {
+        return ResponseEntity.ok(vetService.addCertificate(id, dto));
+    }
+
     @GetMapping
     public ResponseEntity<List<VetProfileResponse>> getAllApprovedVets() {
         return ResponseEntity.ok(vetService.getAllApprovedVets());
@@ -40,11 +63,9 @@ public class VetController {
             @RequestParam String specialization) {
         return ResponseEntity.ok(vetService.searchVetsBySpecialization(specialization));
     }
+
     @GetMapping("/dashboard")
     public ResponseEntity<VetDashboardResponse> getMyDashboard() {
         return ResponseEntity.ok(vetService.getMyDashboard());
     }
-
-
-
 }

@@ -5,19 +5,22 @@ import com.PAWPAW.pawpaw.appointment.repository.AppointmentRepository;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
+import com.PAWPAW.pawpaw.vet.dto.CertificationDto;
 import com.PAWPAW.pawpaw.vet.dto.VetDashboardResponse;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileRequest;
 import com.PAWPAW.pawpaw.vet.dto.VetProfileResponse;
+import com.PAWPAW.pawpaw.vet.entity.Certification;
 import com.PAWPAW.pawpaw.vet.entity.VetProfile;
+import com.PAWPAW.pawpaw.vet.repository.CertificationRepository;
 import com.PAWPAW.pawpaw.vet.repository.VetProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,11 +28,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VetService {
     private final MedicalRecordRepository medicalRecordRepository;
-
     private final VetProfileRepository vetProfileRepository;
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
-
+    private final CertificationRepository certificationRepository;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -39,8 +41,6 @@ public class VetService {
 
     public VetProfileResponse createOrUpdateProfile(VetProfileRequest request) {
         User user = getCurrentUser();
-
-
 
         VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElse(new VetProfile());
@@ -56,17 +56,65 @@ public class VetService {
         profile.setLongitude(request.getLongitude());
         profile.setYearsOfExperience(request.getYearsOfExperience());
 
-        return mapToResponse(vetProfileRepository.save(profile));
+        VetProfile saved = vetProfileRepository.save(profile);
+        saveCertifications(saved, request.getCertifications());
+        return mapToResponse(saved);
     }
 
     public VetProfileResponse getMyProfile() {
         User user = getCurrentUser();
-
-
         VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
-
         return mapToResponse(profile);
+    }
+
+    // ✅ GET /api/vets/{id}
+    public VetProfileResponse getVetById(Long id) {
+        VetProfile profile = vetProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vet not found"));
+        return mapToResponse(profile);
+    }
+
+    // ✅ PATCH /api/vets/{id}
+    @Transactional
+    public VetProfileResponse updateVetById(Long id, VetProfileRequest request) {
+        VetProfile profile = vetProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vet not found"));
+
+        if (request.getClinicName() != null) profile.setClinicName(request.getClinicName());
+        if (request.getClinicAddress() != null) profile.setClinicAddress(request.getClinicAddress());
+        if (request.getPhoneNumber() != null) profile.setPhoneNumber(request.getPhoneNumber());
+        if (request.getSpecialization() != null) profile.setSpecialization(request.getSpecialization());
+        if (request.getLicenseNumber() != null) profile.setLicenseNumber(request.getLicenseNumber());
+        if (request.getBio() != null) profile.setBio(request.getBio());
+        if (request.getLatitude() != null) profile.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) profile.setLongitude(request.getLongitude());
+        if (request.getYearsOfExperience() != null) profile.setYearsOfExperience(request.getYearsOfExperience());
+
+        VetProfile saved = vetProfileRepository.save(profile);
+        saveCertifications(saved, request.getCertifications());
+        return mapToResponse(saved);
+    }
+
+    // ✅ POST /api/vets/{id}/certificate
+    public CertificationDto addCertificate(Long vetId, CertificationDto dto) {
+        VetProfile profile = vetProfileRepository.findById(vetId)
+                .orElseThrow(() -> new RuntimeException("Vet not found"));
+
+        Certification cert = Certification.builder()
+                .vetProfile(profile)
+                .title(dto.getTitle())
+                .status(dto.getStatus() != null ? dto.getStatus() : "PENDING")
+                .imageUrl(dto.getImageUrl())
+                .build();
+
+        Certification saved = certificationRepository.save(cert);
+        CertificationDto result = new CertificationDto();
+        result.setId(saved.getId());
+        result.setTitle(saved.getTitle());
+        result.setStatus(saved.getStatus());
+        result.setImageUrl(saved.getImageUrl());
+        return result;
     }
 
     public List<VetProfileResponse> getAllApprovedVets() {
@@ -81,6 +129,21 @@ public class VetService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    private void saveCertifications(VetProfile profile, List<CertificationDto> certDtos) {
+        if (certDtos == null || certDtos.isEmpty()) return;
+        certificationRepository.deleteByVetProfileId(profile.getId());
+        for (CertificationDto dto : certDtos) {
+            Certification cert = Certification.builder()
+                    .vetProfile(profile)
+                    .title(dto.getTitle())
+                    .status(dto.getStatus() != null ? dto.getStatus() : "PENDING")
+                    .imageUrl(dto.getImageUrl())
+                    .build();
+            certificationRepository.save(cert);
+        }
     }
 
     private VetProfileResponse mapToResponse(VetProfile profile) {
@@ -98,8 +161,37 @@ public class VetService {
         response.setLatitude(profile.getLatitude());
         response.setLongitude(profile.getLongitude());
         response.setYearsOfExperience(profile.getYearsOfExperience());
+
+        // ✅ Map certifications
+        List<CertificationDto> certDtos = certificationRepository
+                .findByVetProfileId(profile.getId())
+                .stream().map(c -> {
+                    CertificationDto dto = new CertificationDto();
+                    dto.setId(c.getId());
+                    dto.setTitle(c.getTitle());
+                    dto.setStatus(c.getStatus());
+                    dto.setImageUrl(c.getImageUrl());
+                    return dto;
+                }).collect(Collectors.toList());
+        response.setCertifications(certDtos);
+
+        // ✅ Map appointments
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        List<VetProfileResponse.AppointmentDto> appointments = appointmentRepository
+                .findByVetIdAndStatusOrderByScheduledAtAsc(profile.getUser().getId(), AppointmentStatus.PENDING)
+                .stream().map(a -> {
+                    VetProfileResponse.AppointmentDto dto = new VetProfileResponse.AppointmentDto();
+                    dto.setId(a.getId());
+                    dto.setPetName(a.getPet().getName());
+                    dto.setDate(a.getScheduledAt().format(formatter));
+                    dto.setStatus(a.getStatus().name());
+                    return dto;
+                }).collect(Collectors.toList());
+        response.setAppointments(appointments);
+
         return response;
     }
+
     public VetDashboardResponse getMyDashboard() {
         User user = getCurrentUser();
         VetProfile profile = vetProfileRepository.findByCustomUserId(user.getId())
@@ -116,7 +208,6 @@ public class VetService {
         long aiDiagnoses = medicalRecordRepository.findByVetId(vetId)
                 .stream().filter(r -> Boolean.TRUE.equals(r.getHasAiReport())).count();
 
-        // Upcoming
         List<VetDashboardResponse.UpcomingAppointment> upcoming = appointmentRepository
                 .findByVetIdAndStatusOrderByScheduledAtAsc(vetId, AppointmentStatus.PENDING)
                 .stream().limit(5).map(a -> {
@@ -129,7 +220,6 @@ public class VetService {
                     return ua;
                 }).collect(Collectors.toList());
 
-        // Recent Cases
         List<VetDashboardResponse.RecentCase> recentCases = medicalRecordRepository
                 .findByVetId(vetId).stream().limit(5).map(r -> {
                     VetDashboardResponse.RecentCase rc = new VetDashboardResponse.RecentCase();
@@ -154,6 +244,4 @@ public class VetService {
                 .recentCases(recentCases)
                 .build();
     }
-
-
 }

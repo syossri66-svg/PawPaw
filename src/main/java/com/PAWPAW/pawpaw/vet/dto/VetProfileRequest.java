@@ -2,6 +2,7 @@ package com.PAWPAW.pawpaw.vet.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class VetProfileRequest {
@@ -26,4 +27,7 @@ public class VetProfileRequest {
     private Double longitude;
 
     private Integer yearsOfExperience;
+
+
+    private List<CertificationDto> certifications;
 }
