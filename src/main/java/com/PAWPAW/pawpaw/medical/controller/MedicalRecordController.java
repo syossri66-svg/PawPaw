@@ -39,6 +39,7 @@ public class MedicalRecordController {
         return ResponseEntity.ok(medicalRecordService.getMyVetRecords());
     }
 
+
     @GetMapping("/{recordId}")
     public ResponseEntity<MedicalRecordResponse> getRecordById(
             @PathVariable Long recordId) {
@@ -46,7 +47,9 @@ public class MedicalRecordController {
     }
 
 
-    @PatchMapping("/{recordId}")
+
+
+    @PatchMapping("/record/{recordId}")
     public ResponseEntity<MedicalRecordResponse> updateRecord(
             @PathVariable Long recordId,
             @RequestBody MedicalRecordRequest request) {
