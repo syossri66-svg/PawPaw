@@ -2,7 +2,11 @@ package com.PAWPAW.pawpaw.medical.service;
 
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
-import com.PAWPAW.pawpaw.medical.dto.*;
+import com.PAWPAW.pawpaw.medical.dto.MedicalRecordRequest;
+import com.PAWPAW.pawpaw.medical.dto.MedicalRecordResponse;
+import com.PAWPAW.pawpaw.medical.dto.MedicalRecordTimelineResponse;
+import com.PAWPAW.pawpaw.medical.dto.MedicationResponse;
+import com.PAWPAW.pawpaw.medical.dto.PetMedicalFullResponse;
 import com.PAWPAW.pawpaw.medical.entity.MedicalRecord;
 import com.PAWPAW.pawpaw.medical.entity.Medication;
 import com.PAWPAW.pawpaw.medical.repository.MedicalRecordRepository;
@@ -94,7 +98,22 @@ public class MedicalRecordService {
         return mapToResponse(record);
     }
 
-    // ✅ GET /api/medical/pet/{petId}/full
+
+    public List<MedicalRecordTimelineResponse> getPetTimeline(Long petId) {
+        return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
+                .stream()
+                .map(record -> {
+                    MedicalRecordTimelineResponse res = new MedicalRecordTimelineResponse();
+                    res.setId(record.getId());
+                    res.setVisitTitle(record.getVisitTitle());
+                    res.setClinicName(record.getClinicName());
+                    res.setVisitDate(record.getVisitDate());
+                    return res;
+                })
+                .collect(Collectors.toList());
+    }
+
+
     public PetMedicalFullResponse getPetFullMedical(Long petId) {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new RuntimeException("Pet not found"));
@@ -118,7 +137,7 @@ public class MedicalRecordService {
         return response;
     }
 
-    // ✅ PATCH /api/medical/record/{recordId}
+
     @Transactional
     public MedicalRecordResponse updateRecord(Long recordId, MedicalRecordRequest request) {
         MedicalRecord record = medicalRecordRepository.findById(recordId)
@@ -142,6 +161,7 @@ public class MedicalRecordService {
         if (request.getDuration() != null) record.setDuration(request.getDuration());
         if (request.getReportUrl() != null) record.setReportUrl(request.getReportUrl());
 
+        // ✅ تم تعديل المنطق هنا ليتناسب مع الـ Partial Update من غير تكرار الأدوية القديمة
         if (request.getMedications() != null) {
             record.getMedications().clear();
             request.getMedications().forEach(m -> {
@@ -168,7 +188,7 @@ public class MedicalRecordService {
         response.setPetBreed(record.getPet().getBreed());
         response.setPetGender(record.getPet().getGender() != null ? record.getPet().getGender().toString() : null);
         response.setPetPhotoUrl(record.getPet().getPhotoUrl());
-        response.setPetWeight(record.getWeight());
+        response.setPetWeight(record.getPet().getWeight()); // تم ربط الحقل بعد تصليحه في الـ Entity
         response.setVetId(record.getVet().getId());
         response.setVetName(record.getVet().getFullName());
         response.setClinicName(record.getClinicName());
@@ -200,18 +220,5 @@ public class MedicalRecordService {
                     return med;
                 }).collect(Collectors.toList()));
         return response;
-    }
-    public List<MedicalRecordTimelineResponse> getPetTimeline(Long petId) {
-        return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
-                .stream()
-                .map(record -> {
-                    MedicalRecordTimelineResponse res = new MedicalRecordTimelineResponse();
-                    res.setId(record.getId());
-                    res.setVisitTitle(record.getVisitTitle());
-                    res.setClinicName(record.getClinicName());
-                    res.setVisitDate(record.getVisitDate());
-                    return res;
-                })
-                .collect(Collectors.toList());
     }
 }
