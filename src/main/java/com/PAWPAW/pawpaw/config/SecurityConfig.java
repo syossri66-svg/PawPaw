@@ -99,6 +99,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/pet-report/**").authenticated()
 
                         // ✅ Fixed: GET is public, everything else requires login
+                        .requestMatchers(HttpMethod.GET, "/api/vets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
