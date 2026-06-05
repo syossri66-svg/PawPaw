@@ -83,7 +83,7 @@ public class SecurityConfig {
                         // 1. السماح بطلبات الـ OPTIONS الخاصة بالـ CORS دائماً
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 2. 🔥 تعديل جذري: السماح بالوصول للملفات المرفوعة والصور بكافة الأشكال لتجنب الـ 403
+                        // 2. السماح بالوصول للملفات المرفوعة والصور بكافة الأشكال لتجنب الـ 403
                         .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**.jpeg", "/**.jpg", "/**.png", "/**.gif").permitAll()
 
@@ -100,8 +100,12 @@ public class SecurityConfig {
                         // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // 7. 🔥 الـ Community والـ Posts والستوري والـ Public Profiles بالكامل
-                        // الـ GET مفتوح تماماً للكل عشان الـ Feed يعرض الصور والروابط بدون مشاكل صلاحيات
+                        // 7. 🔥 تطبيق طلب منة بوضوح: أي authenticated user يقدر يشوف البروفايل وبوستات الـ user
+                        // ومفيش أي شروط ملكية أو roles مقيداهم هنا
+                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/{userId}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/user/{userId}").authenticated()
+
+                        // الـ GET لباقي الـ Community (الـ Feed العام مثلاً) مفتوح للكل
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
                         // الـ POST والـ PUT والـ DELETE محتاجين فقط Token سليم (authenticated) للتفاعل والكتابة
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
