@@ -80,22 +80,22 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 1. السماح بطلبات الـ OPTIONS الخاصة بالـ CORS
+                        // 1. السماح بالـ OPTIONS دائماً
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 2. 🔥 الأولوية للبروفايلات والبوستات (الحل الجذري للـ 403)
-                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/lookup").authenticated()
+                        // 2. 🔥 الأولوية القصوى: السماح بالوصول الكامل لـ AI chats والـ Profiles والـ Posts
+                        // بنفتحها لأي يوزر مسجل (Authenticated)
+                        .requestMatchers("/api/ai/chats/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/lookup").authenticated()
 
-                        // 3. باقي خدمات الأبلكيشن
+                        // 3. باقي الباثات المفتوحة
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**").permitAll()
-
-                        // شات الـ AI مؤمن للمسجلين
-                        .requestMatchers("/api/ai/chats/**").authenticated()
                         .requestMatchers("/api/ai/**").permitAll()
 
+                        // 4. باقي الخدمات الموثقة
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()
