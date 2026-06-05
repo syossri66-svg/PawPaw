@@ -55,7 +55,7 @@ public class AiService {
                 .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
     }
 
-    // ── Visual Scan — مع قراءة الـ JSON بناءً على السكرين شوت بالملّي ───────────────────
+    // ── Visual Scan — نسخة ديناميكية حقيقية بدون بصمكة ───────────────────
     public AiScan saveAndProcessVisualScan(Long petId, MultipartFile file, String imageUrl, Long userId) {
 
         String finalImageUrl = (imageUrl != null && !imageUrl.isEmpty()) ? imageUrl : "";
@@ -74,85 +74,92 @@ public class AiService {
         try {
             String raw;
             if (file != null && !file.isEmpty()) {
-                byte[] bytes = file.getBytes();
-                ByteArrayResource resource = new ByteArrayResource(bytes) {
-                    @Override
-                    public String getFilename() {
-                        return file.getOriginalFilename();
-                    }
-                };
+                // 1. الحل الصح للـ Multipart باستخدام MultipartBodyBuilder عشان الـ Boundary والـ Content-Type يتظبطوا تلقائي
+                org.springframework.http.client.MultipartBodyBuilder builder = new org.springframework.http.client.MultipartBodyBuilder();
+                builder.part("file", file.getResource())
+                        .contentType(org.springframework.http.MediaType.parseMediaType(file.getContentType()));
 
                 raw = webClient.post()
                         .uri(ANALYZE_URL)
-                        .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .body(BodyInserters.fromMultipartData("file", resource))
+                        // ملحوظة قاتلة: أوعى تحط .contentType() هنا يدوي عشان متضربش الـ Boundary
+                        .body(org.springframework.web.reactive.function.BodyInserters.fromMultipartData(builder.build()))
                         .retrieve()
                         .bodyToMono(String.class)
                         .block();
             } else {
                 raw = webClient.post()
                         .uri(ANALYZE_URL)
-                        .header("Content-Type", "application/json")
+                        .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(Map.of("image_url", finalImageUrl))
                         .retrieve()
                         .bodyToMono(String.class)
                         .block();
             }
 
-            // 🎯 تحليل وقراءة الـ Root Node
+            // طباعة الـ الرد الخام في الـ Console عشان تتابعوا الداتا اللي راجعة من البايثون
+            System.out.println(">>> RAW AI RESPONSE: " + raw);
+
+            // 2. تحليل وقراءة الـ JSON الفعلي ديناميكياً
             JsonNode rootNode = objectMapper.readTree(raw);
             scan.setStatus("COMPLETED");
 
-            // تأمين قراءة أوبجكت الـ JSON الأساسي سواء كان الـ response مصفوفة أو أوبجكت مباشر
+            // تأمين القراءة سواء كان الـ response مصفوفة [ ] أو أوبجكت { } مباشر
             JsonNode mainObject = rootNode.isArray() ? rootNode.get(0) : rootNode;
 
-            // 1. لقط اسم المرض والـ Confidence من المصفوفة الأولى
-            if (rootNode.isArray() && rootNode.has(0)) {
-                JsonNode firstResult = rootNode.get(0);
-                scan.setIssueName(firstResult.has("class") ? firstResult.get("class").asText() : "Worm Infection in Dog");
-                scan.setConfidence(firstResult.has("confidence") ? firstResult.get("confidence").asDouble() : 0.9);
-                scan.setHasIssue(true);
+            // 3. لقط اسم المرض والـ Confidence بشكل مرن وديناميكي
+            if (mainObject.has("class")) {
+                String condition = mainObject.get("class").asText();
+                scan.setIssueName(condition);
+                scan.setHasIssue(!condition.equalsIgnoreCase("Healthy"));
             } else {
-                scan.setIssueName(rootNode.has("class") ? rootNode.get("class").asText() : "Worm Infection in Dog");
-                scan.setConfidence(rootNode.has("confidence") ? rootNode.get("confidence").asDouble() : 0.9);
-                scan.setHasIssue(true);
+                scan.setIssueName("Unknown");
+                scan.setHasIssue(false);
             }
 
-            // 2. قراءة الـ ai_recommendation والـ clinical_assessment
+            // معالجة الـ Confidence لو النص جواه علامة % عشان ميحصلش كراش
+            if (mainObject.has("confidence")) {
+                String confStr = mainObject.get("confidence").asText().replace("%", "").trim();
+                try {
+                    scan.setConfidence(Double.parseDouble(confStr));
+                } catch (Exception e) {
+                    scan.setConfidence(mainObject.get("confidence").asDouble());
+                }
+            }
+
+            // 4. قراءة الـ ai_recommendation والـ clinical_assessment
             JsonNode aiRecNode = rootNode.has("ai_recommendation") ? rootNode.get("ai_recommendation") : rootNode.findValue("ai_recommendation");
             String clinicalAssessment = "";
-
             if (aiRecNode != null && aiRecNode.has("clinical_assessment")) {
                 clinicalAssessment = aiRecNode.get("clinical_assessment").asText();
             }
+            scan.setTreatmentTip(!clinicalAssessment.isEmpty() ? clinicalAssessment : "No assessment provided.");
 
-            // 3. لقط الـ breedDetected والـ treatmentTip ديناميكياً من التقرير الطبي
-            scan.setTreatmentTip(!clinicalAssessment.isEmpty() ? clinicalAssessment : "Please follow the treatment plan carefully.");
-
-            if (clinicalAssessment.contains("Pomeranian")) {
+            // 5. لقط الفصيلة ديناميكياً
+            if (mainObject.has("breed")) {
+                scan.setBreedDetected(mainObject.get("breed").asText());
+            } else if (clinicalAssessment.contains("Pomeranian")) {
                 scan.setBreedDetected("Pomeranian");
-            } else if (clinicalAssessment.contains("سبيترز") || clinicalAssessment.contains("Spitz")) {
+            } else if (clinicalAssessment.contains("Spitz") || clinicalAssessment.contains("سبيترز")) {
                 scan.setBreedDetected("German Spitz");
             } else {
                 scan.setBreedDetected("Detected Breed");
             }
 
-            // 4. الدخول جوه الـ treatment_plan وقراءة الروشتة (Active Ingredient, Dosage, Route, Frequency)
+            // 6. الدخول جوه الـ treatment_plan وقراءة الروشتة الحقيقية المبعوتة م الموديل
             JsonNode treatmentPlanArray = rootNode.has("treatment_plan") ? rootNode.get("treatment_plan") : rootNode.findValue("treatment_plan");
 
             if (treatmentPlanArray != null && treatmentPlanArray.isArray() && treatmentPlanArray.has(0)) {
                 JsonNode firstTreatment = treatmentPlanArray.get(0);
-
-                scan.setMedicineName(firstTreatment.has("active_ingredient") ? firstTreatment.get("active_ingredient").asText() : "Griseofulvin");
-                scan.setDosage(firstTreatment.has("dosage") ? firstTreatment.get("dosage").asText() : "25-50 mg/kg");
-                scan.setAdministration(firstTreatment.has("route") ? firstTreatment.get("route").asText() : "PO (Oral)");
-                scan.setFrequency(firstTreatment.has("frequency_duration") ? firstTreatment.get("frequency_duration").asText() : "Twice daily for 4-6 weeks");
+                scan.setMedicineName(getFlexField(firstTreatment, "active_ingredient", "medicine_name", "medicine"));
+                scan.setDosage(getFlexField(firstTreatment, "dosage"));
+                scan.setAdministration(getFlexField(firstTreatment, "route", "administration"));
+                scan.setFrequency(getFlexField(firstTreatment, "frequency_duration", "frequency"));
             } else {
-                // خطة بديلة Fallback مأمنة لتطابق قيم الـ Screen لو الـ Array مرجعش مقروء صح
-                scan.setMedicineName("Griseofulvin (جريسوفولفين)");
-                scan.setDosage("25-50 ملغ/كغ");
-                scan.setAdministration("PO (فموي)");
-                scan.setFrequency("مرتين يومياً لمدة 4-6 أسابيع");
+                // لو الحيوان سليم أو مفيش خطة علاجية مبعوتة فعلياً
+                scan.setMedicineName("None");
+                scan.setDosage("N/A");
+                scan.setAdministration("N/A");
+                scan.setFrequency("N/A");
             }
 
         } catch (Exception e) {
@@ -162,6 +169,16 @@ public class AiService {
         }
 
         return aiScanRepository.save(scan);
+    }
+
+    // دالة مساعدة لقراءة الحقول بشكل مرن وبدون كراش
+    private String getFlexField(JsonNode node, String... keys) {
+        for (String key : keys) {
+            if (node.has(key) && !node.get(key).isNull()) {
+                return node.get(key).asText();
+            }
+        }
+        return "N/A";
     }
 
     // 5. ميثود الـ Stats لحساب الـ Scans
