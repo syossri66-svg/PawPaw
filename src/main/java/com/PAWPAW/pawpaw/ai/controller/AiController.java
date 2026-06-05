@@ -40,15 +40,20 @@ public class AiController {
         }
     }
 
-
     @PostMapping("/visual-scan")
     public ResponseEntity<AiScan> processVisualScan(
             @RequestParam(value = "petId", required = false) Long petId,
             @RequestParam(value = "imageUrl", required = false) String imageUrl) {
 
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = currentUser.getId();
+        Long userId = null;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        // لو المستخدم مسجل دخول، هنستخرج الـ ID بتاعه بشكل آمن
+        if (principal instanceof User) {
+            userId = ((User) principal).getId();
+        }
+
+        // بنباصي الـ petId والـ userId سواء كانوا موجودين أو null
         AiScan scanResult = aiService.saveAndProcessVisualScan(petId, null, imageUrl, userId);
         return ResponseEntity.ok(scanResult);
     }
