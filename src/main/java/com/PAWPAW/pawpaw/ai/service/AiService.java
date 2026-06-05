@@ -46,6 +46,11 @@ public class AiService {
                 .map(raw -> {
                     try {
                         JsonNode node = objectMapper.readTree(raw);
+                        // ✅ جربي data.reply الأول
+                        if (node.has("data") && node.get("data").has("reply")) {
+                            return node.get("data").get("reply").asText();
+                        }
+                        // باقي المفاتيح fallback
                         for (String key : new String[]{"response", "reply", "answer", "message"}) {
                             if (node.has(key)) return node.get(key).asText();
                         }
