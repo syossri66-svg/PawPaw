@@ -69,7 +69,7 @@ public class SecurityConfig {
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
-        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
@@ -87,7 +87,7 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**.jpeg", "/**.jpg", "/**.png", "/**.gif").permitAll()
 
-                        // 3. تعديل البروفايل والصور الشخصية
+                        // 3. تعديل البروفايل والصور الشخصية الخاصة بالمستخدم نفسه
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
                         .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER", "ROLE_USER")
 
@@ -100,10 +100,18 @@ public class SecurityConfig {
                         // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // 7. 🔥 تطبيق طلب منة بوضوح: أي authenticated user يقدر يشوف البروفايل وبوستات الـ user
-                        // ومفيش أي شروط ملكية أو roles مقيداهم هنا
-                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/{userId}").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/posts/user/{userId}").authenticated()
+                        // ==========================================
+                        // 🔥 دمج تعديلات منة الجديدة بالملي هنا 🔥
+                        // ==========================================
+
+                        // التعديل 1: السماح بالـ lookup endpoint لأي authenticated user
+                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/lookup").authenticated()
+
+                        // التعديل 2: التأكد إن أي authenticated user يقدر يشوف الـ profiles والـ posts بتاعة أي حد باستخدام الـ (/**)
+                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
+
+                        // ==========================================
 
                         // الـ GET لباقي الـ Community (الـ Feed العام مثلاً) مفتوح للكل
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
