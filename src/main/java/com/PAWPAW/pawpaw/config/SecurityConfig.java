@@ -103,10 +103,10 @@ public class SecurityConfig {
                         // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // 7. 🔥 حل مشكلة بيدج السوشيال والـ Community والستوري بالكامل
-                        // الـ GET مفتوح للجميع علشان البوستات تحمل عادي
+                        // 7. 🔥 حل مشكلة بيدج السوشيال والـ Community والستوري والـ Public Profiles بالكامل
+                        // الـ GET مفتوح للجميع علشان البوستات وبروفايلات الناس تفتح عادي جداً بدون 403
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
-                        // الـ POST والـ PUT والـ DELETE محتاجين فقط Token سليم (authenticated) لمنع الـ 403 نهائياً
+                        // الـ POST والـ PUT والـ DELETE محتاجين فقط Token سليم (authenticated) للتفاعل والكتابة
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
 
                         // 8. 🔥 حل مشكلة صفحة الـ Friends والرسائل والإشعارات
@@ -124,13 +124,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/vets/{id}/certificate").hasAnyAuthority("ROLE_VET")
                         .requestMatchers("/api/vets/**").authenticated()
 
-
+                        // 10. باقي خدمات الأبلكيشن الموثقة
                         .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
 
-
+                        // 11. باثات الإدارة والـ Admin
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
 
-
+                        // أي Request آخر غير محدد فوق يحتاج تسجيل دخول
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

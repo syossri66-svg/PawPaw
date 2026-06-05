@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,9 +21,17 @@ public class CommunityController {
 
     // --- Post Endpoints ---
 
+    // الميثود المعدلة لاستقبال البوست والصورة بأي اسم وبشكل مضمون
     @PostMapping(value = "/posts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<PostResponse> createPost(@Valid @ModelAttribute PostRequest request) {
-        return ResponseEntity.ok(communityService.createPost(request));
+    public ResponseEntity<PostResponse> createPost(
+            @RequestParam("content") String content,
+            @RequestParam(value = "file", required = false) MultipartFile file1,
+            @RequestParam(value = "image", required = false) MultipartFile file2) {
+
+        // لو ميار بعتت الفايل باسم file أو image هناخد المتاح منهم
+        MultipartFile finalFile = (file1 != null) ? file1 : file2;
+
+        return ResponseEntity.ok(communityService.createNewPostWithImage(content, finalFile));
     }
 
     @GetMapping("/posts")
@@ -50,7 +60,7 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.getSavedPosts());
     }
 
-    // --- Profile & User Endpoints (الطلبات الجديدة للفرونت) ---
+    // --- Profile & User Endpoints ---
 
     @GetMapping("/profiles/{userId}")
     public ResponseEntity<ProfileResponse> getProfile(@PathVariable Long userId) {

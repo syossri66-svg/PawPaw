@@ -9,6 +9,7 @@ import com.PAWPAW.pawpaw.community.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -281,5 +282,31 @@ public class CommunityService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    public PostResponse createNewPostWithImage(String content, MultipartFile file) {
+        User user = getCurrentUser();
+        String uploadedImageUrl = null;
+
+        // 1. الرفع على كلوديناري لو الفايل موجود ومش فاضي
+        try {
+            if (file != null && !file.isEmpty()) {
+                uploadedImageUrl = cloudinaryService.uploadFile(file);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload post image to Cloudinary", e);
+        }
+
+        // 2. الحفظ الفعلي في جدول الـ posts جوه الداتا بيز
+        Post post = Post.builder()
+                .content(content)
+                .imageUrl(uploadedImageUrl)
+                .user(user)
+                .build();
+
+        Post savedPost = postRepository.save(post);
+
+        // 3. تحويل الـ Entity لـ Response بالشكل اللي الفرونت متوقعاه
+        return mapToPostResponse(savedPost);
     }
 }
