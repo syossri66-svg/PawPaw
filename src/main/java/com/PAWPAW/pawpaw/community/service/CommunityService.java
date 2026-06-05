@@ -215,4 +215,71 @@ public class CommunityService {
                 .build();
         return mapToCommentResponse(commentRepository.save(reply));
     }
+
+    public ProfileResponse getProfile(Long userId) {
+        User currentUser = getCurrentUser();
+
+        // 1. نجيب بيانات المستخدم اللي بنزوره
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. نحسب عدد الـ Followers والـ Following من الـ Repository
+        long followersCount = followRepository.countByFollowingId(userId);
+        long followingCount = followRepository.countByFollowerId(userId);
+
+        // 3. نتحقق هل المستخدم الحالي عامل فولو للشخص ده ولا لأ
+        boolean isFollowing = followRepository.findByFollowerIdAndFollowingId(
+                currentUser.getId(), userId).isPresent();
+
+        // 4. نبني الـ ProfileResponse ونرجعه
+        return ProfileResponse.builder()
+                .id(targetUser.getId())
+                .fullName(targetUser.getFullName())
+                .email(targetUser.getEmail())
+                .avatarUrl(targetUser.getAvatarUrl())
+                .coverUrl(targetUser.getCoverUrl())
+                .bio(targetUser.getBio())
+                .location(targetUser.getLocation())
+                .followersCount(followersCount)
+                .followingCount(followingCount)
+                .isFollowing(isFollowing)
+                .build();
+    }
+
+    public List<PostResponse> getUserPosts(Long userId) {
+        // بما إن عندك method جاهزة اسمها getPostsByUser وبتعمل الـ Mapping مظبوط،
+        // فإحنا مجرد هنناديها علطول هنا عشان نمنع تكرار الكود (DRY Principle)
+        return getPostsByUser(userId);
+    }
+
+    public List<ProfileResponse> getUserFriends(Long userId) {
+        User currentUser = getCurrentUser();
+
+        // هنا هنجيب الناس اللي الـ userId ده عاملهم Following (أو الـ Followers حسب رغبتك للـ Friends Tab)
+        // وبنحول كل مستخدم لـ ProfileResponse كامل
+        return followRepository.findByFollowerId(userId)
+                .stream()
+                .map(follow -> {
+                    User friend = follow.getFollowing();
+
+                    long followers = followRepository.countByFollowingId(friend.getId());
+                    long following = followRepository.countByFollowerId(friend.getId());
+                    boolean isFollowingFriend = followRepository.findByFollowerIdAndFollowingId(
+                            currentUser.getId(), friend.getId()).isPresent();
+
+                    return ProfileResponse.builder()
+                            .id(friend.getId())
+                            .fullName(friend.getFullName())
+                            .email(friend.getEmail())
+                            .avatarUrl(friend.getAvatarUrl())
+                            .coverUrl(friend.getCoverUrl())
+                            .bio(friend.getBio())
+                            .location(friend.getLocation())
+                            .followersCount(followers)
+                            .followingCount(following)
+                            .isFollowing(isFollowingFriend)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 }
