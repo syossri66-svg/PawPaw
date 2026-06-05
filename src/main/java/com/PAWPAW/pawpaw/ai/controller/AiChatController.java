@@ -4,13 +4,12 @@ import com.PAWPAW.pawpaw.ai.service.AiChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai/chats")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+// ❌ شيلنا الـ CrossOrigin منعاً لتضارب الـ CORS والـ 403 على Railway
 public class AiChatController {
 
     private final AiChatService aiChatService;

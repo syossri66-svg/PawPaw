@@ -80,48 +80,31 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 1. السماح بطلبات الـ OPTIONS الخاصة بالـ CORS دائماً
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 2. السماح بالوصول للملفات المرفوعة والصور بكافة الأشكال لتجنب الـ 403
                         .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**.jpeg", "/**.jpg", "/**.png", "/**.gif").permitAll()
 
-                        // 3. تعديل البروفايل والصور الشخصية الخاصة بالمستخدم نفسه
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
                         .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER", "ROLE_USER")
 
-                        // 4. باثات الـ Auth الأساسية مفتوحة للكل
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
-                        // 5. الـ AI Visual Scan مفتوح للجميع
+                        // تأمين شات الـ AI بحيث يحتاج Token سليم
+                        .requestMatchers("/api/ai/chats/**").authenticated()
                         .requestMatchers("/api/ai/**").permitAll()
 
-                        // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // ==========================================
-                        // 🔥 دمج تعديلات منة الجديدة بالملي هنا 🔥
-                        // ==========================================
-
-                        // التعديل 1: السماح بالـ lookup endpoint لأي authenticated user
+                        // 🔥 تعديلات منة المضمونة للـ Profiles والـ User Posts
                         .requestMatchers(HttpMethod.GET, "/api/community/profiles/lookup").authenticated()
-
-                        // التعديل 2: التأكد إن أي authenticated user يقدر يشوف الـ profiles والـ posts بتاعة أي حد باستخدام الـ (/**)
                         .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
 
-                        // ==========================================
-
-                        // الـ GET لباقي الـ Community (الـ Feed العام مثلاً) مفتوح للكل
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
-                        // الـ POST والـ PUT والـ DELETE محتاجين فقط Token سليم (authenticated) للتفاعل والكتابة
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
 
-                        // 8. صفحة الـ Friends والرسائل والإشعارات
                         .requestMatchers("/api/friends", "/api/friends/**", "/api/messages", "/api/messages/**").authenticated()
 
-                        // 9. 🩺 باثات الدكاترة والـ Vets
                         .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/{id}").permitAll()
@@ -132,13 +115,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/vets/{id}/certificate").hasAnyAuthority("ROLE_VET")
                         .requestMatchers("/api/vets/**").authenticated()
 
-                        // 10. باقي خدمات الأبلكيشن الموثقة
                         .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
-
-                        // 11. باثات الإدارة والـ Admin
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
 
-                        // أي Request آخر غير محدد فوق يحتاج تسجيل دخول
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
