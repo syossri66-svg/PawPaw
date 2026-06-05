@@ -80,30 +80,36 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-
+                        // 1. السماح بطلبات الـ OPTIONS الخاصة بالـ CORS دائماً
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // 2. السماح بالوصول للملفات المرفوعة والصور للجميع بدون شروط
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
-
-                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR")
-
-                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
 
+                        // 3. تعديل البروفايل والصور الشخصية (مفتوح للأدوار المعتمدة والـ USER العادي احتياطاً)
+                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER")
 
+                        // 4. باثات الـ Auth الأساسية مفتوحة للكل
+                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
+
+                        // 5. الـ AI Visual Scan مفتوح للجميع (الـ Guest والـ Authenticated)
                         .requestMatchers("/api/ai/**").permitAll()
 
+                        // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
+                        // 7. 📝 تعديل وحماية الـ Posts والـ Community بالكامل (لتجنب تعارض الـ Paths اللي ميار بتبعتها)
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**", "/api/community/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/**", "/api/community/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**", "/api/community/posts/**").authenticated()
 
+                        // 8. 🩺 باثات الدكاترة والـ Vets
                         .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/{id}").permitAll()
@@ -114,11 +120,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/vets/{id}/certificate").hasAnyAuthority("ROLE_VET")
                         .requestMatchers("/api/vets/**").authenticated()
 
+
                         .requestMatchers("/api/friends", "/api/friends/**").authenticated()
                         .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
 
+
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN")
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
