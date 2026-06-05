@@ -20,7 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.url.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -69,7 +69,7 @@ public class SecurityConfig {
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
@@ -83,34 +83,30 @@ public class SecurityConfig {
                         // 1. السماح بطلبات الـ OPTIONS الخاصة بالـ CORS دائماً
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 2. السماح بالوصول للملفات المرفوعة والصور للجميع بدون شروط
-                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
-                        .requestMatchers("/api/images/**", "/images/**", "/uploads/**", "/api/vets/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/*.jpeg", "/*.jpg", "/*.png", "/*.gif").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/images/**").permitAll()
+                        // 2. 🔥 تعديل جذري: السماح بالوصول للملفات المرفوعة والصور بكافة الأشكال لتجنب الـ 403
+                        .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**", "/api/vets/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/**.jpeg", "/**.jpg", "/**.png", "/**.gif").permitAll()
 
-                        // 3. تعديل البروفايل والصور الشخصية (مفتوح للأدوار المعتمدة والـ USER العادي احتياطاً)
+                        // 3. تعديل البروفايل والصور الشخصية
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
                         .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER", "ROLE_USER")
 
                         // 4. باثات الـ Auth الأساسية مفتوحة للكل
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
-                        // 5. الـ AI Visual Scan مفتوح للجميع (الـ Guest والـ Authenticated) مع الـ Mapping الجديد
+                        // 5. الـ AI Visual Scan مفتوح للجميع
                         .requestMatchers("/api/ai/**").permitAll()
 
                         // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // 7. 🔥 حل مشكلة بيدج السوشيال والـ Community والستوري والـ Public Profiles بالكامل
-                        // الـ GET مفتوح للجميع علشان البوستات وبروفايلات الناس تفتح عادي جداً بدون 403
+                        // 7. 🔥 الـ Community والـ Posts والستوري والـ Public Profiles بالكامل
+                        // الـ GET مفتوح تماماً للكل عشان الـ Feed يعرض الصور والروابط بدون مشاكل صلاحيات
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
                         // الـ POST والـ PUT والـ DELETE محتاجين فقط Token سليم (authenticated) للتفاعل والكتابة
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
 
-                        // 8. 🔥 حل مشكلة صفحة الـ Friends والرسائل والإشعارات
-                        // أي Request رايح للـ Friends أو الـ Messages محتاج بس يكون authenticated بدون تعقيد الـ Roles
+                        // 8. صفحة الـ Friends والرسائل والإشعارات
                         .requestMatchers("/api/friends", "/api/friends/**", "/api/messages", "/api/messages/**").authenticated()
 
                         // 9. 🩺 باثات الدكاترة والـ Vets
