@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class AiChatService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public AiChatResponse createChat()  {
+    public AiChatResponse createChat() {
         User user = getCurrentUser();
         AiChat chat = AiChat.builder()
                 .title("New Chat")
@@ -53,10 +52,10 @@ public class AiChatService {
         AiChat chat = aiChatRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
 
-        // بعتي للـ AI
+
         String aiResponse = aiService.getAiResponse(message).block();
 
-        // احفظي الرسالة
+
         AiMessage aiMessage = AiMessage.builder()
                 .chat(chat)
                 .userPrompt(message)
@@ -66,14 +65,14 @@ public class AiChatService {
                 .build();
         aiMessageRepository.save(aiMessage);
 
-
-        if (chat.getMessages().size() == 0) {
+        // اعمل title من أول رسالة
+        if (chat.getMessages().isEmpty()) {
             chat.setTitle(message.length() > 30 ? message.substring(0, 30) + "..." : message);
         }
         chat.setUpdatedAt(LocalDateTime.now());
         aiChatRepository.save(chat);
 
-        return Map.of("response", aiResponse);
+        return Map.of("response", aiResponse != null ? aiResponse : "No response from AI");
     }
 
     public List<AiMessage> getChatMessages(Long chatId) {
@@ -92,6 +91,7 @@ public class AiChatService {
     public void deleteChat(Long chatId) {
         aiChatRepository.deleteById(chatId);
     }
+
     private AiChatResponse toResponse(AiChat chat) {
         return AiChatResponse.builder()
                 .id(chat.getId())
@@ -107,5 +107,4 @@ public class AiChatService {
                         .build())
                 .build();
     }
-
 }
