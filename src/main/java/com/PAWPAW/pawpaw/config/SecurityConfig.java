@@ -80,41 +80,26 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // 1. السماح بطلبات الـ OPTIONS الخاصة بالـ CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**", "/api/vets/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/**.jpeg", "/**.jpg", "/**.png", "/**.gif").permitAll()
 
-                        .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER", "ROLE_USER")
-
-                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
-
-                        // تأمين شات الـ AI بحيث يحتاج Token سليم
-                        .requestMatchers("/api/ai/chats/**").authenticated()
-                        .requestMatchers("/api/ai/**").permitAll()
-
-                        .requestMatchers("/api/pet-report/**").authenticated()
-
-                        // 🔥 تعديلات منة المضمونة للـ Profiles والـ User Posts
+                        // 2. 🔥 الأولوية للبروفايلات والبوستات (الحل الجذري للـ 403)
                         .requestMatchers(HttpMethod.GET, "/api/community/profiles/lookup").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
 
+                        // 3. باقي خدمات الأبلكيشن
+                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
+                        .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**").permitAll()
+
+                        // شات الـ AI مؤمن للمسجلين
+                        .requestMatchers("/api/ai/chats/**").authenticated()
+                        .requestMatchers("/api/ai/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
-
-                        .requestMatchers("/api/friends", "/api/friends/**", "/api/messages", "/api/messages/**").authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/vets/{id}").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/vets/profile").hasAnyAuthority("ROLE_VET")
-                        .requestMatchers(HttpMethod.GET, "/api/vets/profile").hasAnyAuthority("ROLE_VET")
-                        .requestMatchers(HttpMethod.GET, "/api/vets/dashboard").hasAnyAuthority("ROLE_VET")
-                        .requestMatchers(HttpMethod.PATCH, "/api/vets/{id}").hasAnyAuthority("ROLE_VET")
-                        .requestMatchers(HttpMethod.POST, "/api/vets/{id}/certificate").hasAnyAuthority("ROLE_VET")
+                        .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()
                         .requestMatchers("/api/vets/**").authenticated()
-
                         .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
 
