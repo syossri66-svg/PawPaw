@@ -22,7 +22,7 @@ public class AiChatService {
 
     private final AiChatRepository aiChatRepository;
     private final UserRepository userRepository;
-    // private final OpenAiService openAiService; // 👈 ده الـ Service اللي كان بيرد عليك زمان
+    private final AiService aiService;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -38,7 +38,7 @@ public class AiChatService {
 
         // 🟢 الرجوع للـ Logic الأصلي: هنا المفروض تنادي الـ Service اللي بيجيب الرد الحقيقي
         // String aiAnswer = openAiService.generateResponse(userQuestion);
-        String aiAnswer = "هذا رد حقيقي من الـ AI"; // 👈 استبدل دي بـ الميثود الأصلية اللي كانت عندك
+        String aiAnswer = aiService.getAiResponse(userQuestion).block(); // ✅ بدل الـ hardcoded
 
         // الـ Auto-Naming (موجود زي ما هو عشان منة متضايقش)
         if (chat.getTitle() == null || "New Chat".equalsIgnoreCase(chat.getTitle().trim()) || chat.getTitle().trim().isEmpty()) {
