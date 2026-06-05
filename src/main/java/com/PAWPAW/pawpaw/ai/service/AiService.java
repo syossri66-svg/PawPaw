@@ -25,24 +25,18 @@ public class AiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String CHAT_URL    = "https://maghanem-pawpaw-api.hf.space/chat";
-
-    // ✅ حل المشكلة الأولى: إضافة الـ Trailing Slash (/) لأن Hugging Face بيعمل Redirect إجباري من غيرها
     private static final String ANALYZE_URL = "https://maghanem-pawpaw-api.hf.space/analyze/";
 
     public AiService(WebClient.Builder webClientBuilder, AiScanRepository aiScanRepository) {
-        // ✅ حل المشكلة الثانية: إجبار الـ WebClient على تتبع الـ Redirects (Follow Redirect) ليتوافق مع بروكسي Hugging Face
         HttpClient httpClient = HttpClient.create().followRedirect(true);
-
         this.webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
         this.aiScanRepository = aiScanRepository;
     }
 
-    // ── Chat ──────────────────────────────────────────────────────────────────
     public Mono<String> getAiResponse(String message) {
         Map<String, String> body = Map.of("message", message);
-
         return webClient.post()
                 .uri(CHAT_URL)
                 .header("Content-Type", "application/json")
@@ -63,7 +57,6 @@ public class AiService {
                 .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
     }
 
-    // ── Visual Scan ───────────────────────────────────────────────────────────
     public AiScan saveAndProcessVisualScan(Long petId, MultipartFile file, String imageUrl, Long userId) {
         AiScan scan = AiScan.builder()
                 .userId(userId)
@@ -75,16 +68,13 @@ public class AiService {
 
         try {
             String raw;
-
             if (file != null && !file.isEmpty()) {
-                // ✅ حل المشكلة الثالثة: استخدام MultipartBodyBuilder عشان الـ Boundary يتكون تلقائي وميحصلش رفض للملف من السيرفر
                 MultipartBodyBuilder builder = new MultipartBodyBuilder();
                 builder.part("file", file.getResource())
                         .contentType(MediaType.parseMediaType(file.getContentType()));
 
                 raw = webClient.post()
                         .uri(ANALYZE_URL)
-                        // 🔥 ممنوع نهائياً تحديد الـ .contentType() هنا يدوي عشان متضربش التشييد والـ Boundary الخاص بالملف
                         .body(BodyInserters.fromMultipartData(builder.build()))
                         .retrieve()
                         .bodyToMono(String.class)
@@ -99,48 +89,67 @@ public class AiService {
                         .block();
             }
 
-            // 🔍 بيطبع الرد الحقيقي اللي جاي من الـ AI في الـ Console للـ Debugging والتأكد
             System.out.println(">>> RAW HUGGINGFACE RESPONSE: " + raw);
 
-            JsonNode node = objectMapper.readTree(raw);
+            JsonNode rootNode = objectMapper.readTree(raw);
 
-            // ⚠️ التعديل العبقري: معالجة إذا كان الرد جاي في Array [ ] أو Object { } مباشرة
-            JsonNode mainObject = node.isArray() ? node.get(0) : node;
+            // 🎯 خطوة التمكين: ندخل جوه الـ "data" لو موجودة عشان نوصل لرد غانم الفعلي
+            JsonNode dataNode = rootNode.has("data") ? rootNode.get("data") : rootNode;
 
             scan.setStatus("COMPLETED");
 
-            // قراءة الحقول الأساسية بشكل مرن يدعم الـ Snake Case والـ Camel Case والـ class المتغيرة من غانم
-            scan.setBreedDetected(getField(mainObject, "breed", "breed_detected", "breedDetected"));
-            scan.setHasIssue(getBoolField(mainObject, "has_issue", "hasIssue"));
-            scan.setIssueName(getField(mainObject, "issue_name", "issueName", "issue", "class"));
-            scan.setConfidence(getDoubleField(mainObject, "confidence"));
-
-            // 🔥 قفزة الثقة للداتا المعقدة:
-            // 1. بندخل أولاً جوه أوبجكت الـ ai_recommendation لو موجود، لو مش موجود بنكمل على الـ mainObject الأساسي
-            JsonNode recommendationNode = mainObject.has("ai_recommendation") ? mainObject.get("ai_recommendation") : mainObject;
-
-            // 2. بنشوف لو جوه الـ recommendation فيه مصفوفة علاج treatment_plan [ ] بناخد أول عنصر فيها وبنقرا تفاصيل الروشتة الحية
-            if (recommendationNode.has("treatment_plan") && recommendationNode.get("treatment_plan").isArray() && recommendationNode.get("treatment_plan").size() > 0) {
-                JsonNode firstTreatment = recommendationNode.get("treatment_plan").get(0);
-
-                String fullPrescription = String.format(
-                        "Clinical Assessment: %s\n\nPrescription:\n- Active Ingredient: %s\n- Dosage: %s\n- Route: %s\n- Frequency & Duration: %s",
-                        getField(recommendationNode, "clinical_assessment", "direct_answer"),
-                        getField(firstTreatment, "active_ingredient"),
-                        getField(firstTreatment, "dosage"),
-                        getField(firstTreatment, "route"),
-                        getField(firstTreatment, "frequency_duration")
-                );
-                scan.setTreatmentTip(fullPrescription);
+            // 1. قراءة الـ Breed من مصفوفة breed_predictions (بناخد أول عنصر لأنه الأعلى كفاءة)
+            if (dataNode.has("breed_predictions") && dataNode.get("breed_predictions").isArray() && dataNode.get("breed_predictions").size() > 0) {
+                JsonNode firstBreed = dataNode.get("breed_predictions").get(0);
+                scan.setBreedDetected(getField(firstBreed, "class"));
             } else {
-                // لو الرد مسطح وقديم من غير تفرعات بيقرأ بالطريقة الاحتياطية العادية علطول
-                scan.setTreatmentTip(getField(recommendationNode, "treatment_tip", "treatmentTip", "treatment", "clinical_assessment", "direct_answer"));
+                scan.setBreedDetected("N/A");
+            }
+
+            // 2. قراءة الـ Issue والـ Confidence من مصفوفة disease_predictions
+            if (dataNode.has("disease_predictions") && dataNode.get("disease_predictions").isArray() && dataNode.get("disease_predictions").size() > 0) {
+                JsonNode firstDisease = dataNode.get("disease_predictions").get(0);
+                String diseaseName = getField(firstDisease, "class");
+                scan.setIssueName(diseaseName);
+                scan.setConfidence(getDoubleField(firstDisease, "confidence"));
+
+                // لو الـ disease مش Healthy يبقى فيه مشكلة فعلاً
+                scan.setHasIssue(!diseaseName.equalsIgnoreCase("Healthy"));
+            } else {
+                scan.setIssueName("N/A");
+                scan.setConfidence(0.0);
+                scan.setHasIssue(false);
+            }
+
+            // 3. الدخول لعمق الـ ai_recommendation والـ treatment_plan
+            if (dataNode.has("ai_recommendation")) {
+                JsonNode aiRec = dataNode.get("ai_recommendation");
+
+                if (aiRec.has("treatment_plan") && aiRec.get("treatment_plan").isArray() && aiRec.get("treatment_plan").size() > 0) {
+                    JsonNode treatment = aiRec.get("treatment_plan").get(0);
+
+                    // بنبني الـ Tip بشكل منسق يعتمد على الـ English Keys لتفادي مشاكل الـ Encoding العربي
+                    String fullPrescription = String.format(
+                            "Medical Analysis for %s:\n- Detected Condition: %s\n- Active Ingredient Needed: %s\n- Recommended Dosage: %s\n- Administration Route: %s\n- Frequency & Duration: %s",
+                            scan.getBreedDetected(),
+                            scan.getIssueName(),
+                            getField(treatment, "active_ingredient"),
+                            getField(treatment, "dosage"),
+                            getField(treatment, "route"),
+                            getField(treatment, "frequency_duration")
+                    );
+                    scan.setTreatmentTip(fullPrescription);
+                } else {
+                    scan.setTreatmentTip("No explicit treatment plan provided by the AI.");
+                }
+            } else {
+                scan.setTreatmentTip("AI Recommendation details are not available.");
             }
 
         } catch (Exception e) {
-            System.out.println(">>> AI STACKTRACE ERROR: " + e.getMessage());
+            System.out.println(">>> AI PARSING ERROR: " + e.getMessage());
             scan.setStatus("FAILED");
-            scan.setTreatmentTip("Analysis failed: " + e.getMessage());
+            scan.setTreatmentTip("Analysis failed to parse: " + e.getMessage());
         }
 
         return aiScanRepository.save(scan);
@@ -150,7 +159,6 @@ public class AiService {
         return aiScanRepository.count();
     }
 
-    // ── ميثودز المساعدة لقراءة الداتا بمرونة تامة وبدون كراشات ──────────────────
     private String getField(JsonNode node, String... keys) {
         for (String key : keys) {
             if (node.has(key) && !node.get(key).isNull())
@@ -159,18 +167,10 @@ public class AiService {
         return "N/A";
     }
 
-    private boolean getBoolField(JsonNode node, String... keys) {
-        for (String key : keys) {
-            if (node.has(key)) return node.get(key).asBoolean();
-        }
-        return false;
-    }
-
     private double getDoubleField(JsonNode node, String... keys) {
         for (String key : keys) {
             if (node.has(key)) {
                 try {
-                    // عشان لو الـ confidence رجع نص وفيه علامة % نعملها تنظيف ويتحول لـ double سليم
                     return Double.parseDouble(node.get(key).asText().replace("%", "").trim());
                 } catch (Exception e) {
                     return node.get(key).asDouble();
