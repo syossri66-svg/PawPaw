@@ -23,40 +23,40 @@ import java.util.Map;
 public class PostController {
 
     private final CloudinaryService cloudinaryService;
+    // إذا كان عندك PostService، ضيفه هنا عشان تستخدمه بدل الـ Mock
+    // private final PostService postService;
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
+    // 🔥 التعديل الجذري: استقبال userIdentifier كـ String لحل مشكلة الـ username
+    @GetMapping("/user/{userIdentifier}")
+    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable String userIdentifier) {
 
+        // ملاحظة: هنا المفروض تنادي السيرفس بتاعتك عشان تجيب الداتا الحقيقية
+        // List<PostResponse> posts = postService.getUserPostsByIdentifier(userIdentifier);
+
+        // ده الـ Mock الحالي عشان الكود يشتغل معاك
         CommentResponse mockComment1 = new CommentResponse();
         mockComment1.setId(1L);
         mockComment1.setContent("So nice! 🐾");
         mockComment1.setUserName("menna_all_usama");
         mockComment1.setCreatedAt(LocalDateTime.now());
 
-        CommentResponse mockComment2 = new CommentResponse();
-        mockComment2.setId(2L);
-        mockComment2.setContent("Amazing paw! ❤️");
-        mockComment2.setUserName("john_doe");
-        mockComment2.setCreatedAt(LocalDateTime.now());
-
         PostResponse mockPost = PostResponse.builder()
                 .id("post_111")
                 .author(PostResponse.AuthorDto.builder()
-                        .username("menna_all_usama")
+                        .username(userIdentifier) // عرض الـ identifier اللي مبعوت
                         .profilePicture("https://res.cloudinary.com/dqscucvxs/image/upload/pawpaw/default-avatar.jpg")
                         .build())
                 .createdAt(LocalDateTime.now())
-                .content("My cute pet! 🐾")
+                .content("Posts for user: " + userIdentifier)
                 .mediaUrl("https://res.cloudinary.com/dqscucvxs/image/upload/pawpaw/default-cover.jpg")
                 .likesCount(25)
                 .liked(false)
-                .comments(List.of(mockComment1, mockComment2))
+                .comments(List.of(mockComment1))
                 .build();
 
         return ResponseEntity.ok(List.of(mockPost));
     }
 
-    // ✅ Fixed: removed @RequestBody — can't mix with @RequestParam in multipart
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createNewFeedPost(
             @RequestParam(value = "content", required = false) String content,
@@ -65,7 +65,6 @@ public class PostController {
             @RequestParam(value = "image", required = false) MultipartFile file2) throws IOException {
 
         String finalContent = content != null ? content : text;
-
         MultipartFile finalFile = (file1 != null) ? file1 : file2;
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String fileUrl = null;
@@ -109,7 +108,6 @@ public class PostController {
             @RequestBody CommentRequest request) {
 
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
         CommentResponse response = new CommentResponse();
         response.setId(101L);
         response.setContent(request.getContent());
@@ -123,10 +121,6 @@ public class PostController {
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<?> deletePost(@PathVariable String postId) {
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return ResponseEntity.ok(Map.of(
-                "message", "Post deleted successfully",
-                "postId", postId
-        ));
+        return ResponseEntity.ok(Map.of("message", "Post deleted successfully", "postId", postId));
     }
 }
