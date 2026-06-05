@@ -4,7 +4,15 @@ import com.PAWPAW.pawpaw.ai.entity.AiScan;
 import com.PAWPAW.pawpaw.ai.repository.AiScanRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -18,15 +26,15 @@ public class AiService {
     private final AiScanRepository aiScanRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String CHAT_URL    = "https://maghanem-pawpaw-owner-api.hf.space/chat";
-    private static final String ANALYZE_URL = "https://maghanem-pawpaw-owner-api.hf.space/analyze";
+    private static final String CHAT_URL    = "https://maghanem-pawpaw-api.hf.space/chat";
+    private static final String ANALYZE_URL = "https://maghanem-pawpaw-api.hf.space/analyze";
 
     public AiService(WebClient.Builder webClientBuilder, AiScanRepository aiScanRepository) {
         this.webClient = webClientBuilder.build();
         this.aiScanRepository = aiScanRepository;
     }
 
-
+    // ── Chat ──────────────────────────────────────────────────────────────────
     public Mono<String> getAiResponse(String message) {
         Map<String, String> body = Map.of("message", message);
 
@@ -39,7 +47,6 @@ public class AiService {
                 .map(raw -> {
                     try {
                         JsonNode node = objectMapper.readTree(raw);
-                        // حاول تجيب response أو reply أو answer
                         for (String key : new String[]{"response", "reply", "answer", "message"}) {
                             if (node.has(key)) return node.get(key).asText();
                         }
@@ -51,7 +58,8 @@ public class AiService {
                 .onErrorResume(e -> Mono.just("AI Service Error: " + e.getMessage()));
     }
 
-    public AiScan saveAndProcessVisualScan(Long petId, String imageUrl, Long userId) {
+    // ── Visual Scan — بيبعت الصورة كـ multipart/form-data ───────────────────
+    public AiScan saveAndProcessVisualScan(Long petId, MultipartFile file, String imageUrl, Long userId) {
         AiScan scan = AiScan.builder()
                 .userId(userId)
                 .petId(petId)
@@ -61,17 +69,35 @@ public class AiService {
                 .build();
 
         try {
-            Map<String, String> body = Map.of(
-                    "image_url", imageUrl != null ? imageUrl : ""
-            );
+            String raw;
 
-            String raw = webClient.post()
-                    .uri(ANALYZE_URL)
-                    .header("Content-Type", "application/json")
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+            if (file != null && !file.isEmpty()) {
+                // بعت الصورة كـ file upload
+                byte[] bytes = file.getBytes();
+                ByteArrayResource resource = new ByteArrayResource(bytes) {
+                    @Override
+                    public String getFilename() {
+                        return file.getOriginalFilename();
+                    }
+                };
+
+                raw = webClient.post()
+                        .uri(ANALYZE_URL)
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .body(BodyInserters.fromMultipartData("file", resource))
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+            } else {
+                // لو مفيش file، بعت image_url
+                raw = webClient.post()
+                        .uri(ANALYZE_URL)
+                        .header("Content-Type", "application/json")
+                        .bodyValue(Map.of("image_url", imageUrl != null ? imageUrl : ""))
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+            }
 
             JsonNode node = objectMapper.readTree(raw);
 
