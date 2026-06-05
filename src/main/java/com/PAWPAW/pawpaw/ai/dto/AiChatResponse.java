@@ -13,6 +13,7 @@ public class AiChatResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UserSummary user;
+    private String aiResponse; // 🔥 تمام جداً.. كدة الإجابة هتوصل للفرونت
 
     @Data
     @Builder

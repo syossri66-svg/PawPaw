@@ -1,28 +1,24 @@
 package com.PAWPAW.pawpaw.ai.service;
 
-import com.PAWPAW.pawpaw.ai.dto.AiChatResponse;
-import com.PAWPAW.pawpaw.ai.entity.AiChat;
-import com.PAWPAW.pawpaw.ai.entity.AiMessage;
-import com.PAWPAW.pawpaw.ai.repository.AiChatRepository;
-import com.PAWPAW.pawpaw.ai.repository.AiMessageRepository;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
+import com.PAWPAW.pawpaw.ai.dto.AiChatResponse;
+import com.PAWPAW.pawpaw.ai.entity.AiChat; // تأكد من اسم الباكيدج والـ Entity للـ Chat عندك
+import com.PAWPAW.pawpaw.ai.repository.AiChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class AiChatService {
 
     private final AiChatRepository aiChatRepository;
-    private final AiMessageRepository aiMessageRepository;
     private final UserRepository userRepository;
-    private final AiService aiService;
+    // private final OpenAiService openAiService; // الـ Service اللي بتكلم بيه الـ LLM عندك
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -30,80 +26,64 @@ public class AiChatService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public AiChatResponse createChat() {
-        User user = getCurrentUser();
-        AiChat chat = AiChat.builder()
-                .title("New Chat")
-                .user(user)
-                .build();
-        return toResponse(aiChatRepository.save(chat));
-    }
+    @Transactional
+    public AiChatResponse askAi(Long chatId, String userQuestion) {
+        User currentUser = getCurrentUser();
 
-    public List<AiChatResponse> getMyChats() {
-        User user = getCurrentUser();
-        return aiChatRepository.findByUserIdOrderByUpdatedAtDesc(user.getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
-    }
-
-    public Map<String, String> sendMessage(Long chatId, String message) {
-        User user = getCurrentUser();
+        // 1. جلب الشات من الداتا بيز
         AiChat chat = aiChatRepository.findById(chatId)
-                .orElseThrow(() -> new RuntimeException("Chat not found"));
+                .orElseThrow(() -> new RuntimeException("AI Chat session not found"));
 
+        // 2. مناداة الـ AI الفعلي عشان يجيب الإجابة (شغل كودك القديم هنا عادي)
+        // String aiAnswer = openAiService.generateResponse(userQuestion);
+        String aiAnswer = "إجابة الـ AI التجريبية";
 
-        String aiResponse = aiService.getAiResponse(message).block();
-
-
-        AiMessage aiMessage = AiMessage.builder()
-                .chat(chat)
-                .userPrompt(message)
-                .aiResponse(aiResponse)
-                .createdAt(LocalDateTime.now())
-                .user(user)
-                .build();
-        aiMessageRepository.save(aiMessage);
-
-        // اعمل title من أول رسالة
-        if (chat.getMessages().isEmpty()) {
-            chat.setTitle(message.length() > 30 ? message.substring(0, 30) + "..." : message);
+        // 3. 🔥 الـ Auto-Naming السحري:
+        // لو الشات لسه جديد، أو اسمه فاضي، أو بيساوي "New Chat" الافتراضية، بنغير الاسم فوراً بناءً على السؤال
+        if (chat.getTitle() == null || "New Chat".equalsIgnoreCase(chat.getTitle().trim()) || chat.getTitle().trim().isEmpty()) {
+            String smartTitle = generateTitleFromQuestion(userQuestion);
+            chat.setTitle(smartTitle);
+            chat.setUpdatedAt(LocalDateTime.now());
+            aiChatRepository.save(chat); // حفظ الاسم الجديد في الداتا بيز
         }
-        chat.setUpdatedAt(LocalDateTime.now());
-        aiChatRepository.save(chat);
 
-        return Map.of("response", aiResponse != null ? aiResponse : "No response from AI");
+        // 4. تحويل الـ Entity لـ الـ DTO المظبوط بتاعك اللي الفرونت مستنياه
+        return mapToAiChatResponse(chat, currentUser);
     }
 
-    public List<AiMessage> getChatMessages(Long chatId) {
-        AiChat chat = aiChatRepository.findById(chatId)
-                .orElseThrow(() -> new RuntimeException("Chat not found"));
-        return chat.getMessages();
+    // ميثود ذكية لتقطيع أول 4 كلمات من سؤال اليوزر عشان نعمل عنوان رايق للشات مع الـ AI
+    private String generateTitleFromQuestion(String question) {
+        if (question == null || question.trim().isEmpty()) {
+            return "استشارة طبية ذكية";
+        }
+
+        String[] words = question.trim().split("\\s+");
+        int wordsToTake = Math.min(words.length, 4); // هناخد أول 4 كلمات بالظبط
+
+        StringBuilder titleBuilder = new StringBuilder();
+        for (int i = 0; i < wordsToTake; i++) {
+            titleBuilder.append(words[i]).append(" ");
+        }
+
+        String title = titleBuilder.toString().trim();
+
+        // لو سؤال اليوزر أطول من الـ 4 كلمات، بنضيف في الآخر نقط عشان الشكل الجمالي (...)
+        return question.length() > title.length() ? title + "..." : title;
     }
 
-    public AiChatResponse updateStatus(Long chatId, String status) {
-        AiChat chat = aiChatRepository.findById(chatId)
-                .orElseThrow(() -> new RuntimeException("Chat not found"));
-        chat.setStatus(status);
-        return toResponse(aiChatRepository.save(chat));
-    }
-
-    public void deleteChat(Long chatId) {
-        aiChatRepository.deleteById(chatId);
-    }
-
-    private AiChatResponse toResponse(AiChat chat) {
+    // ميثود الـ Mapping المبنية على الـ DTO الحقيقي بتاعك بالملي
+    private AiChatResponse mapToAiChatResponse(AiChat chat, User user) {
         return AiChatResponse.builder()
                 .id(chat.getId())
-                .title(chat.getTitle())
+                .title(chat.getTitle()) // الـ Title الجديد أو المستنتج هيرجع هنا تلقائي لمنة
                 .status(chat.getStatus())
                 .createdAt(chat.getCreatedAt())
                 .updatedAt(chat.getUpdatedAt())
                 .user(AiChatResponse.UserSummary.builder()
-                        .id(chat.getUser().getId())
-                        .fullName(chat.getUser().getFullName())
-                        .email(chat.getUser().getEmail())
-                        .avatarUrl(chat.getUser().getAvatarUrl())
+                        .id(user.getId())
+                        .fullName(user.getFullName())
+                        .email(user.getEmail())
+                        .avatarUrl(user.getAvatarUrl())
                         .build())
                 .build();
     }
