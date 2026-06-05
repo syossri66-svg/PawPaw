@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -21,16 +20,13 @@ public class CommunityController {
 
     // --- Post Endpoints ---
 
-    // الميثود المعدلة لاستقبال البوست والصورة بأي اسم وبشكل مضمون
     @PostMapping(value = "/posts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @RequestParam("content") String content,
             @RequestParam(value = "file", required = false) MultipartFile file1,
             @RequestParam(value = "image", required = false) MultipartFile file2) {
 
-        // لو ميار بعتت الفايل باسم file أو image هناخد المتاح منهم
         MultipartFile finalFile = (file1 != null) ? file1 : file2;
-
         return ResponseEntity.ok(communityService.createNewPostWithImage(content, finalFile));
     }
 
@@ -62,13 +58,15 @@ public class CommunityController {
 
     // --- Profile & User Endpoints ---
 
+    // ✅ String بدل Long - بيقبل رقم أو اسم
     @GetMapping("/profiles/{userId}")
-    public ResponseEntity<ProfileResponse> getProfile(@PathVariable Long userId) {
+    public ResponseEntity<ProfileResponse> getProfile(@PathVariable String userId) {
         return ResponseEntity.ok(communityService.getProfile(userId));
     }
 
+    // ✅ String بدل Long - بيقبل رقم أو اسم
     @GetMapping("/profiles/{userId}/posts")
-    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
+    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable String userId) {
         return ResponseEntity.ok(communityService.getUserPosts(userId));
     }
 
@@ -77,8 +75,9 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.getUserFriends(userId));
     }
 
+    // ✅ String بدل Long - بيقبل رقم أو اسم
     @PostMapping("/profiles/{userId}/follow")
-    public ResponseEntity<String> toggleFollow(@PathVariable Long userId) {
+    public ResponseEntity<String> toggleFollow(@PathVariable String userId) {
         return ResponseEntity.ok(communityService.toggleFollow(userId));
     }
 

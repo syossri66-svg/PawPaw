@@ -21,4 +21,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(UserRole role);
     @Query("SELECT u FROM User u WHERE u.fullName LIKE %:keyword% OR u.email LIKE %:keyword%")
     List<User> searchUsers(@Param("keyword") String keyword);
+    Optional<User> findByFullName(String fullName);
 }

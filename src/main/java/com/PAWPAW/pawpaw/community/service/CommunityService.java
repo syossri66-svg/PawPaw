@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +33,18 @@ public class CommunityService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // ✅ Helper method - لو رقم يجيب بالـ ID، لو نص يجيب بالـ fullName
+    private User resolveUser(String identifier) {
+        try {
+            Long id = Long.parseLong(identifier);
+            return userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        } catch (NumberFormatException e) {
+            return userRepository.findByFullName(identifier)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        }
+    }
+
     public PostResponse createPost(PostRequest request) {
         User user = getCurrentUser();
         String uploadedImageUrl = null;
@@ -52,15 +63,11 @@ public class CommunityService {
                 .user(user)
                 .build();
 
-        // تمرير الـ user الحالي للـ mapping مباشرة منعاً للـ N+1
         return mapToPostResponse(postRepository.save(post), user);
     }
 
     public List<PostResponse> getAllPosts() {
-        // 1. نجيب اليوزر الحالي مرة واحدة برة الـ Loop تماماً
         User currentUser = getCurrentUser();
-
-        // 2. ننادي على كويري الـ JOIN FETCH المجمعة لمنع الـ N+1
         return postRepository.findAllPostsWithUser()
                 .stream()
                 .map(post -> mapToPostResponse(post, currentUser))
@@ -114,7 +121,6 @@ public class CommunityService {
         }
     }
 
-    // 🔥 تعديل الميثود دي لاستقبال الـ currentUser جاهز ومنع الكويريز المتكررة
     private PostResponse mapToPostResponse(Post post, User currentUser) {
         PostResponse response = new PostResponse();
         response.setId(post.getId());
@@ -124,8 +130,6 @@ public class CommunityService {
         userInfo.setId(post.getUser().getId());
         userInfo.setName(post.getUser().getFullName());
         userInfo.setAvatar(post.getUser().getAvatarUrl());
-
-        // استخدام الـ currentUser الممرر مباشرة
         userInfo.setFollowing(followRepository.findByFollowerIdAndFollowingId(
                 currentUser.getId(), post.getUser().getId()).isPresent());
         response.setUser(userInfo);
@@ -144,7 +148,6 @@ public class CommunityService {
 
         response.setLiked(likeRepository.findByUserIdAndPostId(
                 currentUser.getId(), post.getId()).isPresent());
-
         response.setSaved(savedPostRepository.findByUserIdAndPostId(
                 currentUser.getId(), post.getId()).isPresent());
 
@@ -164,27 +167,27 @@ public class CommunityService {
 
     public List<PostResponse> getPostsByUser(Long userId) {
         User currentUser = getCurrentUser();
-        // استخدام كويري الـ JOIN FETCH الخاصة بالـ User ID
         return postRepository.findByUserIdWithUser(userId)
                 .stream()
                 .map(post -> mapToPostResponse(post, currentUser))
                 .collect(Collectors.toList());
     }
 
-    public String toggleFollow(Long targetUserId) {
+    // ✅ toggleFollow بيقبل String (رقم أو اسم)
+    public String toggleFollow(String identifier) {
         User currentUser = getCurrentUser();
+        User targetUser = resolveUser(identifier);
+
         var existing = followRepository.findByFollowerIdAndFollowingId(
-                currentUser.getId(), targetUserId);
+                currentUser.getId(), targetUser.getId());
 
         if (existing.isPresent()) {
             followRepository.delete(existing.get());
             return "Unfollowed";
         } else {
-            User target = userRepository.findById(targetUserId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
             followRepository.save(Follow.builder()
                     .follower(currentUser)
-                    .following(target)
+                    .following(targetUser)
                     .build());
             return "Followed";
         }
@@ -228,17 +231,16 @@ public class CommunityService {
         return mapToCommentResponse(commentRepository.save(reply));
     }
 
-    public ProfileResponse getProfile(Long userId) {
+    // ✅ getProfile بيقبل String (رقم أو اسم)
+    public ProfileResponse getProfile(String identifier) {
         User currentUser = getCurrentUser();
+        User targetUser = resolveUser(identifier);
 
-        User targetUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        long followersCount = followRepository.countByFollowingId(userId);
-        long followingCount = followRepository.countByFollowerId(userId);
+        long followersCount = followRepository.countByFollowingId(targetUser.getId());
+        long followingCount = followRepository.countByFollowerId(targetUser.getId());
 
         boolean isFollowing = followRepository.findByFollowerIdAndFollowingId(
-                currentUser.getId(), userId).isPresent();
+                currentUser.getId(), targetUser.getId()).isPresent();
 
         return ProfileResponse.builder()
                 .id(targetUser.getId())
@@ -254,9 +256,10 @@ public class CommunityService {
                 .build();
     }
 
-    public List<PostResponse> getUserPosts(Long userId) {
-        // نداء الميثود المحسنة مباشرة لتوحيد الـ Logic
-        return getPostsByUser(userId);
+    // ✅ getUserPosts بيقبل String (رقم أو اسم)
+    public List<PostResponse> getUserPosts(String identifier) {
+        User targetUser = resolveUser(identifier);
+        return getPostsByUser(targetUser.getId());
     }
 
     public List<ProfileResponse> getUserFriends(Long userId) {
@@ -307,7 +310,6 @@ public class CommunityService {
                 .build();
 
         Post savedPost = postRepository.save(post);
-
         return mapToPostResponse(savedPost, user);
     }
 }
