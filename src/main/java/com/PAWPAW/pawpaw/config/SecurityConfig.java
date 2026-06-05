@@ -80,24 +80,22 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 1. السماح بالـ OPTIONS دائماً
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 2. 🔥 الأولوية القصوى: السماح بالوصول الكامل لـ AI chats والـ Profiles والـ Posts
-                        // بنفتحها لأي يوزر مسجل (Authenticated)
+                        // ✅ AI chats الأول قبل أي حاجة تانية
                         .requestMatchers("/api/ai/chats/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/lookup").authenticated()
 
-                        // 3. باقي الباثات المفتوحة
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**").permitAll()
-                        .requestMatchers("/api/ai/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ai/stats").permitAll()
+                        .requestMatchers("/api/ai/**").permitAll()  // ✅ الباقي مفتوح
 
-                        // 4. باقي الخدمات الموثقة
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
-                        .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**").permitAll()
+                        .requestMatchers("/api/posts/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()
                         .requestMatchers("/api/vets/**").authenticated()
                         .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
