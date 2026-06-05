@@ -17,6 +17,8 @@ public class AiScan {
     private Long id;
 
     private Long userId;
+
+    @Column(nullable = true)
     private Long petId;
     private String imageUrl;
     private String status;

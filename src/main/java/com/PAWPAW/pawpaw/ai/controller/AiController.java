@@ -43,7 +43,7 @@ public class AiController {
 
     @PostMapping("/visual-scan")
     public ResponseEntity<AiScan> processVisualScan(
-            @RequestParam("petId") Long petId,
+            @RequestParam(value = "petId", required = false) Long petId,
             @RequestParam(value = "imageUrl", required = false) String imageUrl) {
 
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
