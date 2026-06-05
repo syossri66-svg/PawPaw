@@ -93,18 +93,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
-                        .requestMatchers("/api/ai/predict", "/api/ai/visual-scan").authenticated()
-                        .requestMatchers("/api/ai/stats").permitAll()
+
+                        // --- تعديل جزء الـ AI لكي يستقبل الـ Guest Users بدون 403 ---
+                        .requestMatchers("/api/ai/**").permitAll()
 
                         .requestMatchers("/api/pet-report/**").authenticated()
-
 
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
-
 
                         .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
