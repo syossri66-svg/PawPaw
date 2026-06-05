@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,13 +52,18 @@ public class CommunityService {
                 .user(user)
                 .build();
 
-        return mapToPostResponse(postRepository.save(post));
+        // تمرير الـ user الحالي للـ mapping مباشرة منعاً للـ N+1
+        return mapToPostResponse(postRepository.save(post), user);
     }
 
     public List<PostResponse> getAllPosts() {
-        return postRepository.findAllByOrderByCreatedAtDesc()
+        // 1. نجيب اليوزر الحالي مرة واحدة برة الـ Loop تماماً
+        User currentUser = getCurrentUser();
+
+        // 2. ننادي على كويري الـ JOIN FETCH المجمعة لمنع الـ N+1
+        return postRepository.findAllPostsWithUser()
                 .stream()
-                .map(this::mapToPostResponse)
+                .map(post -> mapToPostResponse(post, currentUser))
                 .collect(Collectors.toList());
     }
 
@@ -108,9 +114,8 @@ public class CommunityService {
         }
     }
 
-    private PostResponse mapToPostResponse(Post post) {
-        User currentUser = getCurrentUser();
-
+    // 🔥 تعديل الميثود دي لاستقبال الـ currentUser جاهز ومنع الكويريز المتكررة
+    private PostResponse mapToPostResponse(Post post, User currentUser) {
         PostResponse response = new PostResponse();
         response.setId(post.getId());
         response.setCreatedAt(post.getCreatedAt());
@@ -119,6 +124,8 @@ public class CommunityService {
         userInfo.setId(post.getUser().getId());
         userInfo.setName(post.getUser().getFullName());
         userInfo.setAvatar(post.getUser().getAvatarUrl());
+
+        // استخدام الـ currentUser الممرر مباشرة
         userInfo.setFollowing(followRepository.findByFollowerIdAndFollowingId(
                 currentUser.getId(), post.getUser().getId()).isPresent());
         response.setUser(userInfo);
@@ -156,8 +163,12 @@ public class CommunityService {
     }
 
     public List<PostResponse> getPostsByUser(Long userId) {
-        return postRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                .stream().map(this::mapToPostResponse).collect(Collectors.toList());
+        User currentUser = getCurrentUser();
+        // استخدام كويري الـ JOIN FETCH الخاصة بالـ User ID
+        return postRepository.findByUserIdWithUser(userId)
+                .stream()
+                .map(post -> mapToPostResponse(post, currentUser))
+                .collect(Collectors.toList());
     }
 
     public String toggleFollow(Long targetUserId) {
@@ -196,10 +207,10 @@ public class CommunityService {
     }
 
     public List<PostResponse> getSavedPosts() {
-        User user = getCurrentUser();
-        return savedPostRepository.findByUserId(user.getId())
+        User currentUser = getCurrentUser();
+        return savedPostRepository.findByUserId(currentUser.getId())
                 .stream()
-                .map(sp -> mapToPostResponse(sp.getPost()))
+                .map(sp -> mapToPostResponse(sp.getPost(), currentUser))
                 .collect(Collectors.toList());
     }
 
@@ -220,19 +231,15 @@ public class CommunityService {
     public ProfileResponse getProfile(Long userId) {
         User currentUser = getCurrentUser();
 
-        // 1. نجيب بيانات المستخدم اللي بنزوره
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 2. نحسب عدد الـ Followers والـ Following من الـ Repository
         long followersCount = followRepository.countByFollowingId(userId);
         long followingCount = followRepository.countByFollowerId(userId);
 
-        // 3. نتحقق هل المستخدم الحالي عامل فولو للشخص ده ولا لأ
         boolean isFollowing = followRepository.findByFollowerIdAndFollowingId(
                 currentUser.getId(), userId).isPresent();
 
-        // 4. نبني الـ ProfileResponse ونرجعه
         return ProfileResponse.builder()
                 .id(targetUser.getId())
                 .fullName(targetUser.getFullName())
@@ -248,16 +255,13 @@ public class CommunityService {
     }
 
     public List<PostResponse> getUserPosts(Long userId) {
-        // بما إن عندك method جاهزة اسمها getPostsByUser وبتعمل الـ Mapping مظبوط،
-        // فإحنا مجرد هنناديها علطول هنا عشان نمنع تكرار الكود (DRY Principle)
+        // نداء الميثود المحسنة مباشرة لتوحيد الـ Logic
         return getPostsByUser(userId);
     }
 
     public List<ProfileResponse> getUserFriends(Long userId) {
         User currentUser = getCurrentUser();
 
-        // هنا هنجيب الناس اللي الـ userId ده عاملهم Following (أو الـ Followers حسب رغبتك للـ Friends Tab)
-        // وبنحول كل مستخدم لـ ProfileResponse كامل
         return followRepository.findByFollowerId(userId)
                 .stream()
                 .map(follow -> {
@@ -288,7 +292,6 @@ public class CommunityService {
         User user = getCurrentUser();
         String uploadedImageUrl = null;
 
-        // 1. الرفع على كلوديناري لو الفايل موجود ومش فاضي
         try {
             if (file != null && !file.isEmpty()) {
                 uploadedImageUrl = cloudinaryService.uploadFile(file);
@@ -297,7 +300,6 @@ public class CommunityService {
             throw new RuntimeException("Failed to upload post image to Cloudinary", e);
         }
 
-        // 2. الحفظ الفعلي في جدول الـ posts جوه الداتا بيز
         Post post = Post.builder()
                 .content(content)
                 .imageUrl(uploadedImageUrl)
@@ -306,7 +308,6 @@ public class CommunityService {
 
         Post savedPost = postRepository.save(post);
 
-        // 3. تحويل الـ Entity لـ Response بالشكل اللي الفرونت متوقعاه
-        return mapToPostResponse(savedPost);
+        return mapToPostResponse(savedPost, user);
     }
 }

@@ -10,15 +10,19 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // 1. هنجيب كل البوستات ومعاها اليوزر في كويري واحد مجمع
+    // 1. جلب كل البوستات لصفحة الـ Feed مع بيانات الـ User في كويري واحد مجمع
     @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.user ORDER BY p.createdAt DESC")
     List<Post> findAllPostsWithUser();
 
-    // 2. هنجيب بوستات يوزر معين ومعاها بياناته برضه في كويري واحد
+    // 2. جلب بوستات مستخدم معين باستخدام الـ ID بتاعه مع الـ FETCH لبياناته
     @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId ORDER BY p.createdAt DESC")
     List<Post> findByUserIdWithUser(@Param("userId") Long userId);
 
-    // الميثودز البسيطة دي سيبها زي ما هي عادي جداً مش مسببة أزمة
+    // 3. لو منة بتبعت الـ Full Name / Username في الـ URL (حل مشكلة الصفحة الفاضية)
+    @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.user WHERE p.user.fullName = :username ORDER BY p.createdAt DESC")
+    List<Post> findByUsernameWithUser(@Param("username") String username);
+
+    // الميثودز البسيطة اللي كانت عندك سيبناها زي ما هي عشان لو مستخدمها في مكان تاني
     long countByUserId(Long userId);
     List<Post> findByUserId(Long userId);
     List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
