@@ -31,4 +31,9 @@ public class AiScan {
     private String treatmentTip;
 
     private LocalDateTime scanDate;
+
+    private String medicineName;
+    private String dosage;
+    private String administration;
+    private String frequency;
 }

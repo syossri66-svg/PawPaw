@@ -58,12 +58,12 @@ public class AiService {
     // ── Visual Scan — بيبعت الصورة كـ multipart/form-data ───────────────────
     public AiScan saveAndProcessVisualScan(Long petId, MultipartFile file, String imageUrl, Long userId) {
 
-        // 1. حساب الـ URL الافتراضي للصورة لو مرفوعة محلياً
         String finalImageUrl = (imageUrl != null && !imageUrl.isEmpty()) ? imageUrl : "";
         if (file != null && !file.isEmpty() && finalImageUrl.isEmpty()) {
             finalImageUrl = "https://pawpaw-app.up.railway.app/uploads/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
         }
 
+        // تجهيز الأوبجكت المبدئي
         AiScan scan = AiScan.builder()
                 .userId(userId)
                 .petId(petId)
@@ -74,9 +74,7 @@ public class AiService {
 
         try {
             String raw;
-
             if (file != null && !file.isEmpty()) {
-                // بعت الصورة كـ file upload لـ سيرفر غانم
                 byte[] bytes = file.getBytes();
                 ByteArrayResource resource = new ByteArrayResource(bytes) {
                     @Override
@@ -88,12 +86,11 @@ public class AiService {
                 raw = webClient.post()
                         .uri(ANALYZE_URL)
                         .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .body(BodyInserters.fromMultipartData("file", resource)) // بيبعت الفايل في كرت الـ file لغانم
+                        .body(BodyInserters.fromMultipartData("file", resource))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .block(); // الانتظار لقراءة النتيجة الفورية
+                        .block();
             } else {
-                // لو مفيش file، بيبعت الـ image_url
                 raw = webClient.post()
                         .uri(ANALYZE_URL)
                         .header("Content-Type", "application/json")
@@ -103,33 +100,43 @@ public class AiService {
                         .block();
             }
 
-            // 2. تحليل وقراءة الداتا الديناميكية اللي راجعة من بايثون
             JsonNode node = objectMapper.readTree(raw);
-
             scan.setStatus("COMPLETED");
 
-            // قراءة الفيلدز من الـ JSON الخارجي ومطابقتها
+            // 1. قراءة البيانات الأساسية
             scan.setBreedDetected(getField(node, "breed", "breed_detected", "breedDetected"));
-
-            // قراءة حالة وجود مرض
             boolean hasIssue = getBoolField(node, "has_issue", "hasIssue");
             String label = getField(node, "label", "issue_name", "issueName", "issue");
+            scan.setConfidence(getDoubleField(node, "score", "confidence"));
 
-            // لو الـ label راجع بـ Healthy أو لقيت الـ has_issue بـ false
-            if ("Healthy".equalsIgnoreCase(label) || "Normal".equalsIgnoreCase(label)) {
+            // 2. قراءة تفاصيل خطة العلاج (الـ Recommendation الـ Dynamic من الـ AI)
+            if ("Healthy".equalsIgnoreCase(label) || "Normal".equalsIgnoreCase(label) || !hasIssue) {
                 scan.setHasIssue(false);
                 scan.setIssueName("Healthy");
-                scan.setTreatmentTip("Your pet looks perfectly healthy! Keep up the good work. 🐾");
+                scan.setTreatmentTip("Your pet looks perfectly healthy! No medical treatment needed.");
+
+                // داتا ديفولت لو الحيوان سليم
+                scan.setMedicineName("None");
+                scan.setDosage("N/A");
+                scan.setAdministration("N/A");
+                scan.setFrequency("0 times per week");
             } else {
                 scan.setHasIssue(true);
                 scan.setIssueName(label != null ? label : "Detected Issue");
-                scan.setTreatmentTip(getField(node, "treatment_tip", "treatmentTip", "treatment") != null
-                        ? getField(node, "treatment_tip", "treatmentTip", "treatment")
-                        : "We highly recommend consulting a professional veterinarian about this case.");
-            }
+                scan.setTreatmentTip(getField(node, "treatment_tip", "treatmentTip", "treatment"));
 
-            // قراءة نسبة الثقة (Confidence)
-            scan.setConfidence(getDoubleField(node, "score", "confidence"));
+                // 🌟 لقط تفاصيل خطة العلاج والجرعات ديناميكياً من الـ JSON اللي جاي من غانم
+                scan.setMedicineName(getField(node, "medicine_name", "medicine", "medicineName"));
+                scan.setDosage(getField(node, "dosage", "dose"));
+                scan.setAdministration(getField(node, "administration", "how_to_take", "method"));
+                scan.setFrequency(getField(node, "frequency", "times_per_week"));
+
+                // خطة احتياطية (Fallback) لو غانم مبعتش الفيلدز دي متفصصة عشان الكود ميضربش null
+                if (scan.getMedicineName() == null) scan.setMedicineName("Antibiotic Ointment / Supplement");
+                if (scan.getDosage() == null) scan.setDosage("Apply a small amount / 1 pill");
+                if (scan.getAdministration() == null) scan.setAdministration("Topical use / Orally");
+                if (scan.getFrequency() == null) scan.setFrequency("Once daily (7 times a week)");
+            }
 
         } catch (Exception e) {
             System.out.println("Scan Process Error: " + e.getMessage());
@@ -137,7 +144,6 @@ public class AiService {
             scan.setTreatmentTip("Analysis failed: " + e.getMessage());
         }
 
-        // 3. حفظ الاسكن في قاعدة البيانات لزيادة العداد تلقائياً
         return aiScanRepository.save(scan);
     }
 
@@ -167,4 +173,5 @@ public class AiService {
         }
         return 0.0;
     }
+
 }
