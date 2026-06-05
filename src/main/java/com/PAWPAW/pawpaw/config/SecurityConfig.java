@@ -92,24 +92,28 @@ public class SecurityConfig {
 
                         // 3. تعديل البروفايل والصور الشخصية (مفتوح للأدوار المعتمدة والـ USER العادي احتياطاً)
                         .requestMatchers(HttpMethod.PATCH, "/api/auth/me/avatar", "/api/auth/me/cover", "/api/auth/me/**")
-                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER")
+                        .hasAnyAuthority("ROLE_PET_OWNER", "ROLE_VET", "ROLE_VENDOR", "USER", "ROLE_USER")
 
                         // 4. باثات الـ Auth الأساسية مفتوحة للكل
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
 
-                        // 5. الـ AI Visual Scan مفتوح للجميع (الـ Guest والـ Authenticated)
+                        // 5. الـ AI Visual Scan مفتوح للجميع (الـ Guest والـ Authenticated) مع الـ Mapping الجديد
                         .requestMatchers("/api/ai/**").permitAll()
 
                         // 6. التقارير الطبية تحتاج تسجيل دخول
                         .requestMatchers("/api/pet-report/**").authenticated()
 
-                        // 7. 📝 تعديل وحماية الـ Posts والـ Community بالكامل (لتجنب تعارض الـ Paths اللي ميار بتبعتها)
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/posts/**", "/api/community/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/posts/**", "/api/community/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**", "/api/community/posts/**").authenticated()
+                        // 7. 🔥 حل مشكلة بيدج السوشيال والـ Community والستوري بالكامل
+                        // الـ GET مفتوح للجميع علشان البوستات تحمل عادي
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**", "/api/stories/**").permitAll()
+                        // الـ POST والـ PUT والـ DELETE محتاجين فقط Token سليم (authenticated) لمنع الـ 403 نهائياً
+                        .requestMatchers("/api/posts/**", "/api/community/**", "/api/stories/**", "/api/groups/**").authenticated()
 
-                        // 8. 🩺 باثات الدكاترة والـ Vets
+                        // 8. 🔥 حل مشكلة صفحة الـ Friends والرسائل والإشعارات
+                        // أي Request رايح للـ Friends أو الـ Messages محتاج بس يكون authenticated بدون تعقيد الـ Roles
+                        .requestMatchers("/api/friends", "/api/friends/**", "/api/messages", "/api/messages/**").authenticated()
+
+                        // 9. 🩺 باثات الدكاترة والـ Vets
                         .requestMatchers(HttpMethod.GET, "/api/vets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vets/{id}").permitAll()
@@ -121,12 +125,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/vets/**").authenticated()
 
 
-                        .requestMatchers("/api/friends", "/api/friends/**").authenticated()
-                        .requestMatchers("/api/messages", "/api/messages/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
 
 
-                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
 
 
                         .anyRequest().authenticated()

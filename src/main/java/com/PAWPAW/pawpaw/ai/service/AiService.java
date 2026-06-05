@@ -93,12 +93,12 @@ public class AiService {
 
             JsonNode rootNode = objectMapper.readTree(raw);
 
-            // 🎯 خطوة التمكين: ندخل جوه الـ "data" لو موجودة عشان نوصل لرد غانم الفعلي
+
             JsonNode dataNode = rootNode.has("data") ? rootNode.get("data") : rootNode;
 
             scan.setStatus("COMPLETED");
 
-            // 1. قراءة الـ Breed من مصفوفة breed_predictions (بناخد أول عنصر لأنه الأعلى كفاءة)
+
             if (dataNode.has("breed_predictions") && dataNode.get("breed_predictions").isArray() && dataNode.get("breed_predictions").size() > 0) {
                 JsonNode firstBreed = dataNode.get("breed_predictions").get(0);
                 scan.setBreedDetected(getField(firstBreed, "class"));
@@ -106,14 +106,14 @@ public class AiService {
                 scan.setBreedDetected("N/A");
             }
 
-            // 2. قراءة الـ Issue والـ Confidence من مصفوفة disease_predictions
+
             if (dataNode.has("disease_predictions") && dataNode.get("disease_predictions").isArray() && dataNode.get("disease_predictions").size() > 0) {
                 JsonNode firstDisease = dataNode.get("disease_predictions").get(0);
                 String diseaseName = getField(firstDisease, "class");
                 scan.setIssueName(diseaseName);
                 scan.setConfidence(getDoubleField(firstDisease, "confidence"));
 
-                // لو الـ disease مش Healthy يبقى فيه مشكلة فعلاً
+
                 scan.setHasIssue(!diseaseName.equalsIgnoreCase("Healthy"));
             } else {
                 scan.setIssueName("N/A");
@@ -121,7 +121,7 @@ public class AiService {
                 scan.setHasIssue(false);
             }
 
-            // 3. الدخول لعمق الـ ai_recommendation والـ treatment_plan
+
             if (dataNode.has("ai_recommendation")) {
                 JsonNode aiRec = dataNode.get("ai_recommendation");
 
