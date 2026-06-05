@@ -40,17 +40,16 @@ public class AiController {
         }
     }
 
-    // ✅ بيقبل file مباشرة ويبعته للـ AI
-    @PostMapping(value = "/visual-scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+    @PostMapping("/visual-scan")
     public ResponseEntity<AiScan> processVisualScan(
             @RequestParam("petId") Long petId,
-            @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "imageUrl", required = false) String imageUrl) {
 
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = currentUser.getId();
 
-        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, file, imageUrl, userId);
+        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, null, imageUrl, userId);
         return ResponseEntity.ok(scanResult);
     }
 
