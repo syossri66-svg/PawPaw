@@ -94,7 +94,7 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
 
-                        // --- تعديل جزء الـ AI لكي يستقبل الـ Guest Users بدون 403 ---
+
                         .requestMatchers("/api/ai/**").permitAll()
 
                         .requestMatchers("/api/pet-report/**").authenticated()

@@ -40,21 +40,21 @@ public class AiController {
         }
     }
 
-    @PostMapping("/visual-scan")
+    @PostMapping(value = "/visual-scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AiScan> processVisualScan(
             @RequestParam(value = "petId", required = false) Long petId,
-            @RequestParam(value = "imageUrl", required = false) String imageUrl) {
+            @RequestParam(value = "file") MultipartFile file) {
 
         Long userId = null;
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // لو المستخدم مسجل دخول، هنستخرج الـ ID بتاعه بشكل آمن
+
         if (principal instanceof User) {
             userId = ((User) principal).getId();
         }
 
-        // بنباصي الـ petId والـ userId سواء كانوا موجودين أو null
-        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, null, imageUrl, userId);
+
+        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, file, null, userId);
         return ResponseEntity.ok(scanResult);
     }
 
