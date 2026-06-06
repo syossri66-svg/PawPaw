@@ -352,13 +352,13 @@ public class CommunityService {
     private StoryResponse mapToStoryResponse(Story story) {
         User user = story.getUser();
         return StoryResponse.builder()
-                .id(story.getId())
+                .id(String.valueOf(story.getId())) // كدة الـ String هيقبل الـ Long اللي جاي من الـ ID
                 .user(user != null ? UserSummary.builder()
                         .id(user.getId())
                         .fullName(user.getFullName())
                         .email(user.getEmail())
                         .avatarUrl(user.getAvatarUrl())
-                        .build() : null) // لو اليوزر null، هيرجع null بدل ما يضرب Exception
+                        .build() : null)
                 .mediaUrl(story.getMediaUrl())
                 .caption(story.getCaption())
                 .createdAt(story.getCreatedAt())

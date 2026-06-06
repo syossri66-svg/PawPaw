@@ -17,7 +17,7 @@ public class Story {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
