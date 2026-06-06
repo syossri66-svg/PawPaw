@@ -91,6 +91,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("Ahmed123@"))
                 .role(UserRole.ROLE_PET_OWNER)
                 .isVerified(true)
+                .phone("01033105182")
                 .build();
         userRepository.save(owner);
 
