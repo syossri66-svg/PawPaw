@@ -11,4 +11,6 @@ public interface AiMessageRepository extends JpaRepository<AiMessage, UUID> {
 
 
     @Query("SELECT m FROM AiMessage m WHERE m.user.id = :userId ORDER BY m.createdAt DESC")
-    List<AiMessage> findMessagesByUserId(@Param("userId") Long userId);}
+    List<AiMessage> findMessagesByUserId(@Param("userId") Long userId);
+    List<AiMessage> findByChatIdOrderByCreatedAtAsc(Long chatId);
+}

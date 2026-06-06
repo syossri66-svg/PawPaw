@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface AiChatRepository extends JpaRepository<AiChat, Long> {
     List<AiChat> findByUserIdOrderByUpdatedAtDesc(Long userId);
+    List<AiChat> findByUserIdAndStatusNotOrderByUpdatedAtDesc(Long userId, String status);
 }

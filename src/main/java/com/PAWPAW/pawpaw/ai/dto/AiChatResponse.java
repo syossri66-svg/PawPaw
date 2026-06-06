@@ -13,7 +13,7 @@ public class AiChatResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    private boolean pinned;
 
     private UserSummary user;
 

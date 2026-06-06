@@ -47,19 +47,23 @@ public class AiChatService {
         return mapToAiChatResponse(aiChatRepository.save(chat), currentUser, null);
     }
 
+    // 2. getMyChats - شيل الـ ARCHIVED
     public List<AiChatResponse> getMyChats() {
         User currentUser = getCurrentUser();
-        return aiChatRepository.findByUserIdOrderByUpdatedAtDesc(currentUser.getId())
+        return aiChatRepository
+                .findByUserIdAndStatusNotOrderByUpdatedAtDesc(currentUser.getId(), "ARCHIVED")
                 .stream()
                 .map(chat -> mapToAiChatResponse(chat, currentUser, null))
                 .collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> getChatMessages(Long chatId) {
-        AiChat chat = aiChatRepository.findById(chatId)
+        // تأكدي إن الشات موجود
+        aiChatRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
 
-        return chat.getMessages().stream()
+        return aiMessageRepository.findByChatIdOrderByCreatedAtAsc(chatId)
+                .stream()
                 .map(msg -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("userPrompt", msg.getUserPrompt());
@@ -122,12 +126,13 @@ public class AiChatService {
         return title.length() > 20 ? title.substring(0, 20) + "..." : title;
     }
 
+    // 3. mapToAiChatResponse - أضيفي pinned
     private AiChatResponse mapToAiChatResponse(AiChat chat, User user, String aiAnswer) {
-        // 🔥 تم التعديل هنا: استخدام الـ UserSummary المستقل
         return AiChatResponse.builder()
                 .id(chat.getId())
                 .title(chat.getTitle())
                 .status(chat.getStatus())
+                .pinned("PINNED".equals(chat.getStatus()))  // ← جديد
                 .createdAt(chat.getCreatedAt())
                 .updatedAt(chat.getUpdatedAt())
                 .aiResponse(aiAnswer)
