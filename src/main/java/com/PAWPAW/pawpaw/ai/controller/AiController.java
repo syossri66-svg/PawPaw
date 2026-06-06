@@ -21,7 +21,7 @@ public class AiController {
 
     private final AiService aiService;
 
-    // 1. Endpoint لرفع الصور محلياً على السيرفر (لو الفرونت بيحتاجها منفصلة)
+    // 1. Endpoint لرفع الصور محلياً على السيرفر
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -41,31 +41,32 @@ public class AiController {
         }
     }
 
-    // 2. Endpoint التحليل الفوري للصورة ومخاطبة موديل غانم الجديد
+    // 2. Visual Scan — file اختياري عشان الفرونت ممكن يبعت بدون صورة
     @PostMapping(value = "/visual-scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AiScan> processVisualScan(
+    public ResponseEntity<?> processVisualScan(
             @RequestParam(value = "petId", required = false) Long petId,
-            @RequestParam(value = "file") MultipartFile file) {
+            @RequestParam(value = "file", required = false) MultipartFile file,       // ← required = false
+            @RequestParam(value = "imageUrl", required = false) String imageUrl) {    // ← قبلنا imageUrl كمان
+
+        // لو مفيش file ولا imageUrl → رجع error واضح
+        if ((file == null || file.isEmpty()) && (imageUrl == null || imageUrl.isBlank())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Please provide either a file or an imageUrl for the scan."));
+        }
 
         Long userId = null;
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        // لقط الـ User ID تلقائياً من الـ Token عشان نسيف العملية باسم المستخدم
         if (principal instanceof User) {
             userId = ((User) principal).getId();
         }
 
-
-        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, file, null, userId);
+        AiScan scanResult = aiService.saveAndProcessVisualScan(petId, file, imageUrl, userId);
         return ResponseEntity.ok(scanResult);
     }
 
-
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
-
         Long totalScans = aiService.getTotalScansCount();
-
         return ResponseEntity.ok(Map.of(
                 "accuracy", "94%",
                 "breeds", "200+",

@@ -73,16 +73,17 @@ public class User implements UserDetails {
 
     private String bio;
 
-
     private String profilePicture;
     private String coverPhoto;
 
     private String location;
 
+    // ✅ phone field جديد
+    private String phone;
+
     @OneToMany(mappedBy = "sender")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Message> sentMessages;
-
 
     public String getAvatarUrl() {
         return this.profilePicture;
@@ -98,5 +99,10 @@ public class User implements UserDetails {
 
     public void setCoverUrl(String coverUrl) {
         this.coverPhoto = coverUrl;
+    }
+
+
+    public String getPhone() {
+        return this.phone;
     }
 }
