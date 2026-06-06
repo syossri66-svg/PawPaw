@@ -346,14 +346,15 @@ public class CommunityService {
     }
 
     private StoryResponse mapToStoryResponse(Story story) {
+        User user = story.getUser();
         return StoryResponse.builder()
                 .id(story.getId())
-                // 🔥 التصحيح: استخدم الـ UserSummary الأصلي مش اللي جوه الـ AiChatResponse
-                .user(UserSummary.builder()
-                        .id(story.getUser().getId())
-                        .fullName(story.getUser().getFullName())
-                        .avatarUrl(story.getUser().getAvatarUrl())
-                        .build())
+                .user(user != null ? UserSummary.builder()
+                        .id(user.getId())
+                        .fullName(user.getFullName())
+                        .email(user.getEmail())
+                        .avatarUrl(user.getAvatarUrl())
+                        .build() : null) // لو اليوزر null، هيرجع null بدل ما يضرب Exception
                 .mediaUrl(story.getMediaUrl())
                 .caption(story.getCaption())
                 .createdAt(story.getCreatedAt())
