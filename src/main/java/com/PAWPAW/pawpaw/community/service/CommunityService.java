@@ -326,25 +326,18 @@ public class CommunityService {
 
     public StoryResponse uploadNewStory(MultipartFile file, String caption) {
         User user = getCurrentUser();
-        System.out.println("DEBUG: User found: " + user.getFullName()); // اتأكد إن اليوزر مش null
+        System.out.println("DEBUG: User ID: " + user.getId());
 
-        String url;
-        try {
-            url = cloudinaryService.uploadFile(file);
-            System.out.println("DEBUG: Cloudinary URL: " + url); // اتأكد إن الـ URL مش null
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to upload story image: " + e.getMessage());
-        }
+        String url = "test-url"; // جرب تحط قيمة ثابتة عشان نستبعد الـ Cloudinary
 
         Story story = Story.builder()
                 .user(user)
                 .mediaUrl(url)
-                .caption(caption)
-                .createdAt(LocalDateTime.now()) // اتأكد إنك بتبعت التاريخ
+                .caption(caption != null ? caption : "No caption")
                 .build();
 
         Story savedStory = storyRepository.save(story);
-        System.out.println("DEBUG: Saved Story ID: " + savedStory.getId()); // اتأكد إن فيه ID رجع
+        System.out.println("DEBUG: Saved Story: " + savedStory);
 
         return mapToStoryResponse(savedStory);
     }
