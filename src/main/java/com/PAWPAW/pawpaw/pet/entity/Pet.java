@@ -35,14 +35,17 @@ public class Pet {
 
     private String uniqueId;
 
+
+    private Boolean vaccinated;
+
+    private Double weight;
+
     @Enumerated(EnumType.STRING)
     private PetGender gender;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
-
-    private Double weight;
 
     private LocalDateTime createdAt;
 

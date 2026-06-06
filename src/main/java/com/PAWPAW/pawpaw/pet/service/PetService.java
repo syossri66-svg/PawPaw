@@ -46,6 +46,8 @@ public class PetService {
                 .gender(request.getGender())
                 .healthStatus(request.getHealthStatus())
                 .uniqueId(request.getUniqueId())
+                .vaccinated(request.getVaccinated())
+                .weight(request.getWeight())
                 .owner(owner)
                 .build();
 
@@ -61,7 +63,7 @@ public class PetService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ ميثود مخصصة للفرونت إند بترجع لستة خفيفة (id و name بس) عشان اللود
+    // ✅ بترجع كل الـ fields اللي الفرونت محتاجها (مش id و name بس)
     public List<java.util.Map<String, Object>> getMyPetsLight() {
         User owner = getCurrentUser();
         return petRepository.findByOwnerId(owner.getId())
@@ -70,6 +72,39 @@ public class PetService {
                     java.util.Map<String, Object> map = new java.util.HashMap<>();
                     map.put("id", pet.getId());
                     map.put("name", pet.getName());
+                    map.put("species", pet.getSpecies());
+                    map.put("breed", pet.getBreed());
+                    map.put("dateOfBirth", pet.getDateOfBirth());
+                    map.put("photoUrl", pet.getPhotoUrl());
+                    map.put("gender", pet.getGender());
+                    map.put("healthStatus", pet.getHealthStatus());
+                    map.put("uniqueId", pet.getUniqueId());
+                    map.put("medicalNotes", pet.getMedicalNotes());
+
+                    // weight و vaccinated: بناخدهم من آخر سجل طبي لو موجود
+                    // وإلا بناخدهم من الـ entity نفسه
+                    var latestRecord = medicalRecordRepository
+                            .findByPetIdOrderByVisitDateDesc(pet.getId())
+                            .stream()
+                            .findFirst();
+
+                    if (latestRecord.isPresent()) {
+                        var record = latestRecord.get();
+                        map.put("weight", record.getWeight() != null ? record.getWeight() : pet.getWeight());
+                        map.put("vaccinated",
+                                record.getVaccinationStatus() != null &&
+                                        record.getVaccinationStatus().equalsIgnoreCase("Up To Date"));
+                        map.put("vetName", record.getVet() != null ? record.getVet().getFullName() : null);
+                        map.put("lastDiagnosis", record.getDiagnosis());
+                        map.put("lastVisitDate", record.getVisitDate());
+                    } else {
+                        map.put("weight", pet.getWeight());
+                        map.put("vaccinated", pet.getVaccinated());
+                        map.put("vetName", null);
+                        map.put("lastDiagnosis", null);
+                        map.put("lastVisitDate", null);
+                    }
+
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -94,6 +129,8 @@ public class PetService {
         pet.setGender(request.getGender());
         pet.setHealthStatus(request.getHealthStatus());
         pet.setUniqueId(request.getUniqueId());
+        pet.setVaccinated(request.getVaccinated());
+        pet.setWeight(request.getWeight());
 
         return mapToResponse(petRepository.save(pet));
     }
@@ -118,24 +155,33 @@ public class PetService {
         response.setHealthStatus(pet.getHealthStatus());
         response.setUniqueId(pet.getUniqueId());
 
+        // ✅ بياخد weight و vaccinated من آخر سجل طبي لو موجود
         medicalRecordRepository
                 .findByPetIdOrderByVisitDateDesc(pet.getId())
                 .stream()
                 .findFirst()
-                .ifPresent(record -> {
-                    response.setVetName(record.getVet().getFullName());
-                    response.setLastDiagnosis(record.getDiagnosis());
-                    response.setLastVisitDate(record.getVisitDate());
-                    response.setWeight(record.getWeight());
-                    response.setVaccinated(
-                            record.getVaccinationStatus() != null &&
-                                    record.getVaccinationStatus().equalsIgnoreCase("Up To Date")
-                    );
-                });
+                .ifPresentOrElse(
+                        record -> {
+                            response.setVetName(record.getVet() != null ? record.getVet().getFullName() : null);
+                            response.setLastDiagnosis(record.getDiagnosis());
+                            response.setLastVisitDate(record.getVisitDate());
+                            response.setWeight(record.getWeight() != null ? record.getWeight() : pet.getWeight());
+                            response.setVaccinated(
+                                    record.getVaccinationStatus() != null &&
+                                            record.getVaccinationStatus().equalsIgnoreCase("Up To Date")
+                            );
+                        },
+                        () -> {
+                            // لو مفيش سجل طبي → بياخد من الـ entity مباشرة
+                            response.setWeight(pet.getWeight());
+                            response.setVaccinated(pet.getVaccinated());
+                        }
+                );
+
         return response;
     }
 
-    // ✅ ميثود تاريخ الوزن مفرمتة بالشهور بدون نول
+    // ✅ تاريخ الوزن
     public List<java.util.Map<String, Object>> getWeightHistory(Long petId) {
         return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
                 .stream()
@@ -151,7 +197,7 @@ public class PetService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ ميثود سجل الزيارات الطبية مفرمتة بـ Snake Case والروابط المطلوبة في شاشة الـ UI
+    // ✅ سجل الزيارات الطبية
     public List<java.util.Map<String, Object>> getPetMedicalRecordsForFront(Long petId) {
         return medicalRecordRepository.findByPetIdOrderByVisitDateDesc(petId)
                 .stream()
