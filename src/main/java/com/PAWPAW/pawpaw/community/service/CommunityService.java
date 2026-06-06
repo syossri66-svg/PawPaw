@@ -7,6 +7,7 @@ import com.PAWPAW.pawpaw.common.CloudinaryService;
 import com.PAWPAW.pawpaw.community.dto.*;
 import com.PAWPAW.pawpaw.community.entity.*;
 import com.PAWPAW.pawpaw.community.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -324,21 +325,24 @@ public class CommunityService {
 
     // ... داخل CommunityService.java ...
 
-    public StoryResponse uploadNewStory(MultipartFile file, String caption) {
+    @Transactional
+    public StoryResponse uploadNewStory(MultipartFile file, String caption) throws IOException {
         User user = getCurrentUser();
-        System.out.println("DEBUG: User ID: " + user.getId());
 
-        String url = "test-url"; // جرب تحط قيمة ثابتة عشان نستبعد الـ Cloudinary
+        // 1. رفع الصورة
+        String url = cloudinaryService.uploadFile(file);
 
-        Story story = Story.builder()
-                .user(user)
-                .mediaUrl(url)
-                .caption(caption != null ? caption : "No caption")
-                .build();
+        // 2. بناء الـ Story
+        Story story = new Story();
+        story.setUser(user);
+        story.setMediaUrl(url);
+        story.setCaption(caption);
+        story.setCreatedAt(LocalDateTime.now());
 
+        // 3. الحفظ
         Story savedStory = storyRepository.save(story);
-        System.out.println("DEBUG: Saved Story: " + savedStory);
 
+        // 4. الـ Mapping
         return mapToStoryResponse(savedStory);
     }
 
