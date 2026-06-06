@@ -11,13 +11,26 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PetReportResponse {
+
+    // ── الشكل القديم (الفرونت الحالي) ──────────────────────────────────────
     private PetDataDto petData;
     private OwnerDataDto ownerData;
     private String aiSummary;
     private List<VitaminDto> vitamins;
 
+    // ── الشكل الجديد (طلب منة) ──────────────────────────────────────────────
+    private String petName;
+    private String reportDate;
+    private List<String> symptoms;
+    private String prediction;
+    private Integer confidenceScore;
+    private List<String> recommendations;
+
+    // ── Nested DTOs ──────────────────────────────────────────────────────────
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PetDataDto {
         private String name;
         private String age;
@@ -27,6 +40,8 @@ public class PetReportResponse {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class OwnerDataDto {
         private String name;
         private String id;
@@ -35,6 +50,8 @@ public class PetReportResponse {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class VitaminDto {
         private String id;
         private String label;

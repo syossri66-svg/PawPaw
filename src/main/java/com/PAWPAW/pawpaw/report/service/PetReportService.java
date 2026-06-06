@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,7 +26,7 @@ public class PetReportService {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new RuntimeException("Pet not found with id: " + petId));
 
-        // ── 2. احسب العمر من dateOfBirth ──────────────────────────────────
+        // ── 2. احسب العمر ─────────────────────────────────────────────────
         String age = "Unknown";
         if (pet.getDateOfBirth() != null) {
             Period period = Period.between(pet.getDateOfBirth(), LocalDate.now());
@@ -37,7 +39,7 @@ public class PetReportService {
             }
         }
 
-        // ── 3. جيب آخر سجل طبي للوزن والتشخيص ───────────────────────────
+        // ── 3. جيب آخر سجل طبي ───────────────────────────────────────────
         var latestRecord = medicalRecordRepository
                 .findByPetIdOrderByVisitDateDesc(petId)
                 .stream()
@@ -47,15 +49,10 @@ public class PetReportService {
                 .map(r -> r.getWeight() != null ? r.getWeight() : pet.getWeight())
                 .orElse(pet.getWeight());
 
-        String lastDiagnosis = latestRecord
-                .map(r -> r.getDiagnosis())
-                .orElse(null);
+        String lastDiagnosis = latestRecord.map(r -> r.getDiagnosis()).orElse(null);
+        String vetName       = latestRecord.map(r -> r.getVet() != null ? r.getVet().getFullName() : null).orElse(null);
 
-        String vetName = latestRecord
-                .map(r -> r.getVet() != null ? r.getVet().getFullName() : null)
-                .orElse(null);
-
-        // ── 4. بناء petData ───────────────────────────────────────────────
+        // ── 4. petData ────────────────────────────────────────────────────
         PetReportResponse.PetDataDto petData = PetReportResponse.PetDataDto.builder()
                 .name(pet.getName())
                 .age(age)
@@ -63,7 +60,7 @@ public class PetReportService {
                 .weight(weight != null ? weight + " kg" : "N/A")
                 .build();
 
-        // ── 5. بناء ownerData ─────────────────────────────────────────────
+        // ── 5. ownerData ──────────────────────────────────────────────────
         var owner = pet.getOwner();
         PetReportResponse.OwnerDataDto ownerData = PetReportResponse.OwnerDataDto.builder()
                 .name(owner.getFullName() != null ? owner.getFullName() : "Unknown")
@@ -71,40 +68,84 @@ public class PetReportService {
                 .contact(owner.getPhone() != null ? owner.getPhone() : owner.getEmail())
                 .build();
 
-        // ── 6. بناء الـ AI Summary ────────────────────────────────────────
-        String summary = buildAiSummary(pet, weight, lastDiagnosis, vetName);
+        // ── 6. aiSummary ──────────────────────────────────────────────────
+        String aiSummary = buildAiSummary(pet, weight, lastDiagnosis, vetName);
 
-        // ── 7. بناء الـ Vitamins بناءً على حالة الحيوان ───────────────────
+        // ── 7. vitamins ───────────────────────────────────────────────────
         List<PetReportResponse.VitaminDto> vitamins = List.of(
                 PetReportResponse.VitaminDto.builder()
-                        .id("b12")
-                        .label("B12")
-                        .dose("1 times/day")
-                        .selected(true)
+                        .id("b12").label("B12").dose("1 times/day").selected(true)
                         .build(),
                 PetReportResponse.VitaminDto.builder()
-                        .id("supp")
-                        .label("Supplement")
-                        .dose("4 times/day")
+                        .id("supp").label("Supplement").dose("4 times/day")
                         .selected(pet.getHealthStatus() != null &&
                                 !pet.getHealthStatus().equalsIgnoreCase("Healthy"))
                         .build()
         );
 
+        // ── 8. symptoms — من الـ medical notes والـ diagnosis ────────────
+        List<String> symptoms = new ArrayList<>();
+        if (pet.getMedicalNotes() != null && !pet.getMedicalNotes().isBlank()) {
+            symptoms.add(pet.getMedicalNotes());
+        }
+        if (lastDiagnosis != null && !lastDiagnosis.isBlank()) {
+            symptoms.add(lastDiagnosis);
+        }
+        if (symptoms.isEmpty()) {
+            symptoms.add("No symptoms recorded");
+        }
+
+        // ── 9. prediction & confidenceScore ──────────────────────────────
+        String prediction;
+        int confidenceScore;
+        if ("Healthy".equalsIgnoreCase(pet.getHealthStatus())) {
+            prediction      = "Healthy";
+            confidenceScore = 94;
+        } else if (pet.getHealthStatus() != null) {
+            prediction      = pet.getHealthStatus();
+            confidenceScore = 80;
+        } else {
+            prediction      = "Unknown";
+            confidenceScore = 0;
+        }
+
+        // ── 10. recommendations ───────────────────────────────────────────
+        List<String> recommendations = new ArrayList<>();
+        recommendations.add("B12 supplement — 1 times/day");
+        if (pet.getVaccinated() == null || !pet.getVaccinated()) {
+            recommendations.add("Update vaccination schedule");
+        } else {
+            recommendations.add("Vaccinations are up to date");
+        }
+        if (weight != null && weight < 5.0) {
+            recommendations.add("Monitor weight — consider dietary adjustment");
+        }
+        if (vetName != null) {
+            recommendations.add("Follow up with Dr. " + vetName);
+        }
+
+        // ── 11. reportDate ────────────────────────────────────────────────
+        String reportDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
         return PetReportResponse.builder()
+                // الشكل القديم
                 .petData(petData)
                 .ownerData(ownerData)
-                .aiSummary(summary)
+                .aiSummary(aiSummary)
                 .vitamins(vitamins)
+                // الشكل الجديد
+                .petName(pet.getName())
+                .reportDate(reportDate)
+                .symptoms(symptoms)
+                .prediction(prediction)
+                .confidenceScore(confidenceScore)
+                .recommendations(recommendations)
                 .build();
     }
 
-    // ── Helper: بيبني الـ Summary ديناميكياً من بيانات الـ Pet ────────────
     private String buildAiSummary(Pet pet, Double weight, String lastDiagnosis, String vetName) {
         StringBuilder sb = new StringBuilder();
-
         sb.append(pet.getName() != null ? pet.getName() : "Your pet");
-
         if ("Healthy".equalsIgnoreCase(pet.getHealthStatus())) {
             sb.append(" is in good health.");
         } else if (pet.getHealthStatus() != null) {
@@ -112,25 +153,15 @@ public class PetReportService {
         } else {
             sb.append(" has been examined.");
         }
-
-        if (weight != null) {
-            sb.append(" Current weight: ").append(weight).append(" kg.");
-        }
-
-        if (lastDiagnosis != null && !lastDiagnosis.isBlank()) {
+        if (weight != null) sb.append(" Current weight: ").append(weight).append(" kg.");
+        if (lastDiagnosis != null && !lastDiagnosis.isBlank())
             sb.append(" Latest diagnosis: ").append(lastDiagnosis).append(".");
-        }
-
-        if (vetName != null) {
-            sb.append(" Attended by Dr. ").append(vetName).append(".");
-        }
-
+        if (vetName != null) sb.append(" Attended by Dr. ").append(vetName).append(".");
         if (pet.getVaccinated() != null && pet.getVaccinated()) {
             sb.append(" Vaccinations are up to date.");
         } else {
             sb.append(" Please check vaccination schedule.");
         }
-
         return sb.toString();
     }
 }
