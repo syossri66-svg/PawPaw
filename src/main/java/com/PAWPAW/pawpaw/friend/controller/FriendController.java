@@ -46,4 +46,17 @@ public class FriendController {
         friendService.removeFriend(friendId);
         return ResponseEntity.noContent().build();
     }
+    // ✅ accept
+    @PostMapping("/accept/{friendId}")
+    public ResponseEntity<FriendResponse> acceptRequest(@PathVariable Long friendId) {
+        return ResponseEntity.ok(friendService.respondToRequest(friendId, FriendStatus.ACCEPTED));
+    }
+
+    // ✅ decline
+    @PostMapping("/decline/{friendId}")
+    public ResponseEntity<FriendResponse> declineRequest(@PathVariable Long friendId) {
+        return ResponseEntity.ok(friendService.respondToRequest(friendId, FriendStatus.REJECTED));
+    }
+
+
 }
