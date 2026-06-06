@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -27,7 +28,6 @@ import java.util.List;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
-    private final AuthenticationProvider authenticationProvider;
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -40,26 +40,28 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // تعريف الـ AuthenticationProvider كـ Bean ليحل مشكلة الـ UnsatisfiedDependencyException
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService());
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // السماح بكل الـ OPTIONS ميثود (ضروري للـ CORS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // الروابط العامة
                         .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
                         .requestMatchers("/uploads/**", "/api/images/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ai/stats").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
-
-                        // الـ Community والـ Posts (السماح بالـ GET للجميع)
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**").permitAll()
-
-                        // الروابط المحمية
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()
                         .requestMatchers("/api/vets/**").authenticated()
@@ -77,14 +79,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "https://pawpaw-app-cb-ay9nv29jd8tt8etcicz8v2.streamlit.app",
                 "https://pawpaw-app.up.railway.app"
         ));
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
