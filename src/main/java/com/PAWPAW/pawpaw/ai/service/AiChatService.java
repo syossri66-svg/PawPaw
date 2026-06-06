@@ -4,16 +4,18 @@ import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.ai.dto.AiChatResponse;
 import com.PAWPAW.pawpaw.ai.entity.AiChat;
+import com.PAWPAW.pawpaw.ai.entity.AiMessage;
 import com.PAWPAW.pawpaw.ai.repository.AiChatRepository;
-// تأكد إنك عامل Import لخدمة الـ AI الخاصة بيك هنا
-// import com.PAWPAW.pawpaw.ai.service.OpenAiService;
+import com.PAWPAW.pawpaw.ai.repository.AiMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class AiChatService {
 
     private final AiChatRepository aiChatRepository;
+    private final AiMessageRepository aiMessageRepository;
     private final UserRepository userRepository;
     private final AiService aiService;
 
@@ -30,27 +33,6 @@ public class AiChatService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    @Transactional
-    public AiChatResponse askAi(Long chatId, String userQuestion) {
-        User currentUser = getCurrentUser();
-        AiChat chat = aiChatRepository.findById(chatId)
-                .orElseThrow(() -> new RuntimeException("AI Chat session not found"));
-
-        // 🟢 الرجوع للـ Logic الأصلي: هنا المفروض تنادي الـ Service اللي بيجيب الرد الحقيقي
-        // String aiAnswer = openAiService.generateResponse(userQuestion);
-        String aiAnswer = aiService.getAiResponse(userQuestion).block(); // ✅ بدل الـ hardcoded
-
-        // الـ Auto-Naming (موجود زي ما هو عشان منة متضايقش)
-        if (chat.getTitle() == null || "New Chat".equalsIgnoreCase(chat.getTitle().trim()) || chat.getTitle().trim().isEmpty()) {
-            chat.setTitle(generateTitleFromQuestion(userQuestion));
-            chat.setUpdatedAt(LocalDateTime.now());
-            aiChatRepository.save(chat);
-        }
-
-        return mapToAiChatResponse(chat, currentUser, aiAnswer);
-    }
-
-    // باقي الميثودز (createChat, getMyChats, etc.) بتفضل زي ما هي
     @Transactional
     public AiChatResponse createChat() {
         User currentUser = getCurrentUser();
@@ -72,16 +54,28 @@ public class AiChatService {
                 .collect(Collectors.toList());
     }
 
-    public AiChatResponse getChatMessages(Long chatId) {
-        User currentUser = getCurrentUser();
-        AiChat chat = aiChatRepository.findById(chatId).orElseThrow(() -> new RuntimeException("Not found"));
-        return mapToAiChatResponse(chat, currentUser, null);
+    // ✅ بيرجع List من الرسائل بالشكل اللي الفرونت بتتوقعه
+    // { userPrompt, aiResponse, createdAt }
+    public List<Map<String, Object>> getChatMessages(Long chatId) {
+        AiChat chat = aiChatRepository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found"));
+
+        return chat.getMessages().stream()
+                .map(msg -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("userPrompt", msg.getUserPrompt());
+                    map.put("aiResponse", msg.getAiResponse());
+                    map.put("createdAt", msg.getCreatedAt());
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public AiChatResponse updateStatus(Long chatId, String status) {
         User currentUser = getCurrentUser();
-        AiChat chat = aiChatRepository.findById(chatId).orElseThrow(() -> new RuntimeException("Not found"));
+        AiChat chat = aiChatRepository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Not found"));
         chat.setStatus(status);
         chat.setUpdatedAt(LocalDateTime.now());
         return mapToAiChatResponse(aiChatRepository.save(chat), currentUser, null);
@@ -92,9 +86,40 @@ public class AiChatService {
         aiChatRepository.deleteById(chatId);
     }
 
+    // ✅ بيحفظ الرسالة في الـ DB وبيرجع { response, id, createdAt }
     @Transactional
-    public AiChatResponse sendMessage(Long chatId, String content) {
-        return askAi(chatId, content);
+    public Map<String, Object> sendMessage(Long chatId, String content) {
+        User currentUser = getCurrentUser();
+        AiChat chat = aiChatRepository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found"));
+
+        // ✅ نادي الـ AI الحقيقي
+        String aiAnswer = aiService.getAiResponse(content).block();
+
+        // ✅ احفظ الرسالة في الـ DB
+        AiMessage message = AiMessage.builder()
+                .chat(chat)
+                .user(currentUser)
+                .userPrompt(content)
+                .aiResponse(aiAnswer)
+                .createdAt(LocalDateTime.now())
+                .build();
+        aiMessageRepository.save(message);
+
+        // ✅ عدل عنوان الشات لو لسه "New Chat"
+        if (chat.getTitle() == null || "New Chat".equalsIgnoreCase(chat.getTitle().trim())) {
+            chat.setTitle(generateTitleFromQuestion(content));
+        }
+        chat.setUpdatedAt(LocalDateTime.now());
+        aiChatRepository.save(chat);
+
+        // ✅ رجّع الـ response بالشكل اللي الفرونت بتتوقعه
+        Map<String, Object> response = new HashMap<>();
+        response.put("response", aiAnswer);
+        response.put("id", message.getId());
+        response.put("createdAt", message.getCreatedAt());
+        response.put("title", chat.getTitle());
+        return response;
     }
 
     private String generateTitleFromQuestion(String question) {
