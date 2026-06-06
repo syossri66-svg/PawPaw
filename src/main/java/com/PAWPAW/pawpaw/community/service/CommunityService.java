@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.community.service;
 
+import com.PAWPAW.pawpaw.admin.dto.UserSummary;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.common.CloudinaryService;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,8 @@ public class CommunityService {
     private final FollowRepository followRepository;
     private final CloudinaryService cloudinaryService;
     private final SavedPostRepository savedPostRepository;
+    private final StoryRepository storyRepository;
+
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -312,4 +316,44 @@ public class CommunityService {
         Post savedPost = postRepository.save(post);
         return mapToPostResponse(savedPost, user);
     }
+    // منطق الـ Stories
+    public List<StoryResponse> getAllActiveStories() {
+        return storyRepository.findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime.now().minusHours(24))
+                .stream().map(this::mapToStoryResponse).collect(Collectors.toList());
+    }
+
+    // ... داخل CommunityService.java ...
+
+    public StoryResponse uploadNewStory(MultipartFile file, String caption) {
+        // 🔥 التصحيح: جلب اليوزر بالميثود المتاحة
+        User user = getCurrentUser();
+        String url = cloudinaryService.uploadFile(file);
+
+        // 🔥 التصحيح: استخدام الـ Builder بدلاً من الـ Constructor الناقص
+        Story story = Story.builder()
+                .user(user)
+                .mediaUrl(url)
+                .caption(caption)
+                .build();
+
+        Story savedStory = storyRepository.save(story);
+        return mapToStoryResponse(savedStory);
+    }
+
+    private StoryResponse mapToStoryResponse(Story story) {
+        return StoryResponse.builder()
+                .id(story.getId())
+                // 🔥 التصحيح: استخدم الـ UserSummary الأصلي مش اللي جوه الـ AiChatResponse
+                .user(UserSummary.builder()
+                        .id(story.getUser().getId())
+                        .fullName(story.getUser().getFullName())
+                        .avatarUrl(story.getUser().getAvatarUrl())
+                        .build())
+                .mediaUrl(story.getMediaUrl())
+                .caption(story.getCaption())
+                .createdAt(story.getCreatedAt())
+                .build();
+    }
+
+
 }

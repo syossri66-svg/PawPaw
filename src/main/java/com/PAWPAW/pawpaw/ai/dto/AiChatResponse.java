@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.ai.dto;
 
+import com.PAWPAW.pawpaw.admin.dto.UserSummary;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -12,15 +13,9 @@ public class AiChatResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private UserSummary user;
-    private String aiResponse; // 🔥 تمام جداً.. كدة الإجابة هتوصل للفرونت
 
-    @Data
-    @Builder
-    public static class UserSummary {
-        private Long id;
-        private String fullName;
-        private String email;
-        private String avatarUrl;
-    }
+
+    private UserSummary user;
+
+    private String aiResponse;
 }

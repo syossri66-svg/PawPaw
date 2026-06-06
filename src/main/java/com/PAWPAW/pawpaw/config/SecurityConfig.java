@@ -94,6 +94,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
 
+                                .requestMatchers("/api/auth/**").permitAll()
+
+
+
+                                .requestMatchers("/api/community/**").authenticated()
+
+
+                                .requestMatchers("/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**").permitAll()
                         .requestMatchers("/api/posts/**", "/api/community/**", "/api/groups/**").authenticated()
                         .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()

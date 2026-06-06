@@ -105,4 +105,30 @@ public class CommunityController {
                                                           @Valid @RequestBody CommentRequest request) {
         return ResponseEntity.ok(communityService.replyToComment(commentId, request));
     }
+    // --- STORIES ---
+    @GetMapping("/stories")
+    public ResponseEntity<List<StoryResponse>> getStories() {
+        // هنا هترجع لستة الستوريز النشطة
+        return ResponseEntity.ok(List.of(/* list of stories */));
+    }
+    @PostMapping(value = "/stories", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<StoryResponse> uploadStory(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "caption", required = false) String caption) {
+        // هنا الرفع لـ Cloudinary وحفظ الستوري في الداتابيز
+        return ResponseEntity.ok(new StoryResponse());
+    }
+    // --- REELS ---
+    @GetMapping("/reels")
+    public ResponseEntity<List<ReelResponse>> getReels() {
+        // هنا لستة الريلز
+        return ResponseEntity.ok(List.of(/* list of reels */));
+    }
+    @PostMapping(value = "/reels", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ReelResponse> uploadReel(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("title") String title) {
+        // هنا رفع الفيديو لـ Cloudinary
+        return ResponseEntity.ok(new ReelResponse());
+    }
 }
