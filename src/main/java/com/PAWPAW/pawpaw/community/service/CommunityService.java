@@ -325,11 +325,16 @@ public class CommunityService {
     // ... داخل CommunityService.java ...
 
     public StoryResponse uploadNewStory(MultipartFile file, String caption) {
-        // 🔥 التصحيح: جلب اليوزر بالميثود المتاحة
         User user = getCurrentUser();
-        String url = cloudinaryService.uploadFile(file);
+        String url;
 
-        // 🔥 التصحيح: استخدام الـ Builder بدلاً من الـ Constructor الناقص
+        try {
+            // 🔥 تم إضافة الـ try-catch للتعامل مع الـ IOException
+            url = cloudinaryService.uploadFile(file);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload story image: " + e.getMessage());
+        }
+
         Story story = Story.builder()
                 .user(user)
                 .mediaUrl(url)
