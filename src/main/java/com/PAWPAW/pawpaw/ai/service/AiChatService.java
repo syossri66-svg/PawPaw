@@ -1,5 +1,6 @@
 package com.PAWPAW.pawpaw.ai.service;
 
+import com.PAWPAW.pawpaw.admin.dto.UserSummary;
 import com.PAWPAW.pawpaw.auth.entity.User;
 import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.ai.dto.AiChatResponse;
@@ -54,8 +55,6 @@ public class AiChatService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ بيرجع List من الرسائل بالشكل اللي الفرونت بتتوقعه
-    // { userPrompt, aiResponse, createdAt }
     public List<Map<String, Object>> getChatMessages(Long chatId) {
         AiChat chat = aiChatRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
@@ -86,17 +85,14 @@ public class AiChatService {
         aiChatRepository.deleteById(chatId);
     }
 
-    // ✅ بيحفظ الرسالة في الـ DB وبيرجع { response, id, createdAt }
     @Transactional
     public Map<String, Object> sendMessage(Long chatId, String content) {
         User currentUser = getCurrentUser();
         AiChat chat = aiChatRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
 
-        // ✅ نادي الـ AI الحقيقي
         String aiAnswer = aiService.getAiResponse(content).block();
 
-        // ✅ احفظ الرسالة في الـ DB
         AiMessage message = AiMessage.builder()
                 .chat(chat)
                 .user(currentUser)
@@ -106,14 +102,12 @@ public class AiChatService {
                 .build();
         aiMessageRepository.save(message);
 
-        // ✅ عدل عنوان الشات لو لسه "New Chat"
         if (chat.getTitle() == null || "New Chat".equalsIgnoreCase(chat.getTitle().trim())) {
             chat.setTitle(generateTitleFromQuestion(content));
         }
         chat.setUpdatedAt(LocalDateTime.now());
         aiChatRepository.save(chat);
 
-        // ✅ رجّع الـ response بالشكل اللي الفرونت بتتوقعه
         Map<String, Object> response = new HashMap<>();
         response.put("response", aiAnswer);
         response.put("id", message.getId());
@@ -129,6 +123,7 @@ public class AiChatService {
     }
 
     private AiChatResponse mapToAiChatResponse(AiChat chat, User user, String aiAnswer) {
+        // 🔥 تم التعديل هنا: استخدام الـ UserSummary المستقل
         return AiChatResponse.builder()
                 .id(chat.getId())
                 .title(chat.getTitle())
@@ -136,7 +131,7 @@ public class AiChatService {
                 .createdAt(chat.getCreatedAt())
                 .updatedAt(chat.getUpdatedAt())
                 .aiResponse(aiAnswer)
-                .user(AiChatResponse.UserSummary.builder()
+                .user(UserSummary.builder()
                         .id(user.getId())
                         .fullName(user.getFullName())
                         .email(user.getEmail())
