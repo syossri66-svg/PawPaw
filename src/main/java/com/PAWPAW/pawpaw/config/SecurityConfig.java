@@ -30,6 +30,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
+    private final JwtAuthFilter jwtAuthFilter;
+    private final AuthenticationProvider authenticationProvider;
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -43,27 +45,51 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService());
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        // السماح بكل الـ OPTIONS ميثود (ضروري للـ CORS)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+                        // الروابط العامة
+                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
+                        .requestMatchers("/uploads/**", "/api/images/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ai/stats").permitAll()
+                        .requestMatchers("/api/ai/**").permitAll()
+
+                        // الـ Community والـ Posts (السماح بالـ GET للجميع)
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**").permitAll()
+
+                        // الروابط المحمية
+                        .requestMatchers("/api/posts/**", "/api/community/**", "/api/groups/**").authenticated()
+                        .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()
+                        .requestMatchers("/api/vets/**").authenticated()
+                        .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // القائمة المسموح لها بالوصول
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "https://pawpaw-app-cb-ay9nv29jd8tt8etcicz8v2.streamlit.app",
                 "https://pawpaw-app.up.railway.app"
         ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
@@ -72,49 +98,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // ✅ AI chats الأول قبل أي حاجة تانية
-                        .requestMatchers("/api/ai/chats/**").authenticated()
-
-                        .requestMatchers("/api/auth/**", "/requester-signup", "/forgot-password").permitAll()
-                        .requestMatchers("/uploads/**", "uploads/**", "/api/images/**", "/images/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/ai/upload").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/ai/stats").permitAll()
-                        .requestMatchers("/api/ai/**").permitAll()  // ✅ الباقي مفتوح
-
-                        .requestMatchers(HttpMethod.GET, "/api/community/profiles/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/posts/user/**").authenticated()
-
-                                .requestMatchers("/api/auth/**").permitAll()
-
-
-
-                                .requestMatchers("/api/community/**").authenticated()
-
-
-                                .requestMatchers("/api/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/community/**").permitAll()
-                        .requestMatchers("/api/posts/**", "/api/community/**", "/api/groups/**").authenticated()
-                        .requestMatchers("/api/friends/**", "/api/messages/**").authenticated()
-                        .requestMatchers("/api/vets/**").authenticated()
-                        .requestMatchers("/api/appointments/**", "/api/notifications/**", "/api/pets/**", "/api/medical/**").authenticated()
-                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
-
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
     }
 }
