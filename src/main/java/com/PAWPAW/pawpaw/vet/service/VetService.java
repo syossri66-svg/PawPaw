@@ -68,14 +68,12 @@ public class VetService {
         return mapToResponse(profile);
     }
 
-    // ✅ GET /api/vets/{id}
     public VetProfileResponse getVetById(Long id) {
         VetProfile profile = vetProfileRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vet not found"));
         return mapToResponse(profile);
     }
 
-    // ✅ PATCH /api/vets/{id}
     @Transactional
     public VetProfileResponse updateVetById(Long id, VetProfileRequest request) {
         VetProfile profile = vetProfileRepository.findById(id)
@@ -96,7 +94,6 @@ public class VetService {
         return mapToResponse(saved);
     }
 
-    // ✅ POST /api/vets/{id}/certificate
     public CertificationDto addCertificate(Long vetId, CertificationDto dto) {
         VetProfile profile = vetProfileRepository.findById(vetId)
                 .orElseThrow(() -> new RuntimeException("Vet not found"));
@@ -147,10 +144,14 @@ public class VetService {
     }
 
     private VetProfileResponse mapToResponse(VetProfile profile) {
+        // Fresh user من الـ DB عشان نتجنب lazy loading مشكلة
+        User user = userRepository.findById(profile.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         VetProfileResponse response = new VetProfileResponse();
         response.setId(profile.getId());
-        response.setUserId(profile.getUser().getId());
-        response.setVetName(profile.getUser().getFullName());
+        response.setUserId(user.getId());
+        response.setVetName(user.getFullName());
         response.setClinicName(profile.getClinicName());
         response.setClinicAddress(profile.getClinicAddress());
         response.setPhoneNumber(profile.getPhoneNumber());
@@ -162,7 +163,7 @@ public class VetService {
         response.setLongitude(profile.getLongitude());
         response.setYearsOfExperience(profile.getYearsOfExperience());
 
-        // ✅ Map certifications
+        // certifications
         List<CertificationDto> certDtos = certificationRepository
                 .findByVetProfileId(profile.getId())
                 .stream().map(c -> {
@@ -175,7 +176,7 @@ public class VetService {
                 }).collect(Collectors.toList());
         response.setCertifications(certDtos);
 
-        // ✅ Map appointments
+        // appointments
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         List<VetProfileResponse.AppointmentDto> appointments = appointmentRepository
                 .findByVetIdAndStatusOrderByScheduledAtAsc(profile.getUser().getId(), AppointmentStatus.PENDING)
