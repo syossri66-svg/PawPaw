@@ -1,10 +1,10 @@
 package com.PAWPAW.pawpaw.ai.entity;
 
 import lombok.*;
-import jakarta.persistence.*; // أو javax.persistence لو شغالين سبرينج بوت قديم
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity // غيرناها من @Table لـ @Entity
+@Entity
 @Table(name = "ai_scans")
 @Data
 @Builder
@@ -20,6 +20,7 @@ public class AiScan {
 
     @Column(nullable = true)
     private Long petId;
+
     private String imageUrl;
     private String status;
     private String breedDetected;
@@ -36,4 +37,7 @@ public class AiScan {
     private String dosage;
     private String administration;
     private String frequency;
+
+    @Column(columnDefinition = "TEXT")
+    private String summary;
 }
