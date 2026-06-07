@@ -204,7 +204,7 @@ public class AiService {
         // Condition
         if (scan.isHasIssue()) {
             sb.append("⚠️ Detected Condition: ").append(scan.getIssueName())
-                    .append(String.format(" (%.1f%% confidence)\n", scan.getConfidence()));
+                    .append(String.format(" (%.1f%% confidence)\n", scan.getConfidence() * 100));
         } else {
             sb.append("✅ No significant health issues detected.\n");
         }
@@ -276,7 +276,7 @@ public class AiService {
         if (scan.isHasIssue()) {
             return String.format(
                     "🔍 Scan completed for %s.\n⚠️ Detected: %s (%.1f%% confidence).\nPlease consult a veterinarian for further examination.",
-                    scan.getBreedDetected(), scan.getIssueName(), scan.getConfidence()
+                    scan.getBreedDetected(), scan.getIssueName(), scan.getConfidence() * 100
             );
         }
         return String.format(
