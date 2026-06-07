@@ -6,12 +6,14 @@ import com.PAWPAW.pawpaw.auth.repository.UserRepository;
 import com.PAWPAW.pawpaw.ai.dto.AiChatResponse;
 import com.PAWPAW.pawpaw.ai.entity.AiChat;
 import com.PAWPAW.pawpaw.ai.entity.AiMessage;
+import com.PAWPAW.pawpaw.ai.entity.AiScan;
 import com.PAWPAW.pawpaw.ai.repository.AiChatRepository;
 import com.PAWPAW.pawpaw.ai.repository.AiMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -47,7 +49,7 @@ public class AiChatService {
         return mapToAiChatResponse(aiChatRepository.save(chat), currentUser, null);
     }
 
-    // 2. getMyChats - شيل الـ ARCHIVED
+    // شيل الـ ARCHIVED من القائمة
     public List<AiChatResponse> getMyChats() {
         User currentUser = getCurrentUser();
         return aiChatRepository
@@ -58,7 +60,6 @@ public class AiChatService {
     }
 
     public List<Map<String, Object>> getChatMessages(Long chatId) {
-        // تأكدي إن الشات موجود
         aiChatRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
 
@@ -89,6 +90,7 @@ public class AiChatService {
         aiChatRepository.deleteById(chatId);
     }
 
+    // رسالة نصية عادية
     @Transactional
     public Map<String, Object> sendMessage(Long chatId, String content) {
         User currentUser = getCurrentUser();
@@ -120,19 +122,82 @@ public class AiChatService {
         return response;
     }
 
+    // ✅ جديد: رسالة مع صورة → visual scan تلقائي عبر /analyze
+    @Transactional
+    public Map<String, Object> sendMessageWithScan(Long chatId, String content,
+                                                   MultipartFile file, String imageUrl) {
+        User currentUser = getCurrentUser();
+        AiChat chat = aiChatRepository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found"));
+
+        String userPromptText = (content != null && !content.isBlank())
+                ? content
+                : "Please analyze this image.";
+
+        String aiAnswer;
+
+        // لو في صورة → روح لـ /analyze
+        if ((file != null && !file.isEmpty()) || (imageUrl != null && !imageUrl.isBlank())) {
+            AiScan scan = aiService.saveAndProcessVisualScan(null, file, imageUrl, currentUser.getId());
+            aiAnswer = (scan.getSummary() != null && !scan.getSummary().isBlank())
+                    ? scan.getSummary()
+                    : buildFallbackResponse(scan);
+        } else {
+            // مفيش صورة → رسالة نصية عادية
+            aiAnswer = aiService.getAiResponse(userPromptText).block();
+        }
+
+        AiMessage message = AiMessage.builder()
+                .chat(chat)
+                .user(currentUser)
+                .userPrompt(userPromptText)
+                .aiResponse(aiAnswer)
+                .createdAt(LocalDateTime.now())
+                .build();
+        aiMessageRepository.save(message);
+
+        if (chat.getTitle() == null || "New Chat".equalsIgnoreCase(chat.getTitle().trim())) {
+            chat.setTitle(generateTitleFromQuestion(userPromptText));
+        }
+        chat.setUpdatedAt(LocalDateTime.now());
+        aiChatRepository.save(chat);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("response", aiAnswer);
+        response.put("id", message.getId());
+        response.put("createdAt", message.getCreatedAt());
+        response.put("title", chat.getTitle());
+        return response;
+    }
+
+    // Fallback لو السمري فاضي
+    private String buildFallbackResponse(AiScan scan) {
+        StringBuilder sb = new StringBuilder("🔍 Scan completed.\n");
+        if (scan.getBreedDetected() != null && !scan.getBreedDetected().equals("N/A")) {
+            sb.append("🐾 Breed: ").append(scan.getBreedDetected()).append("\n");
+        }
+        if (scan.getIssueName() != null && !scan.getIssueName().equals("N/A")) {
+            sb.append(scan.isHasIssue() ? "⚠️ Issue: " : "✅ Condition: ")
+                    .append(scan.getIssueName()).append("\n");
+        }
+        if (scan.getTreatmentTip() != null && !scan.getTreatmentTip().isBlank()) {
+            sb.append("\n💊 Treatment:\n").append(scan.getTreatmentTip());
+        }
+        return sb.toString();
+    }
+
     private String generateTitleFromQuestion(String question) {
         String[] words = question.trim().split("\\s+");
         String title = words[0] + (words.length > 1 ? " " + words[1] : "");
         return title.length() > 20 ? title.substring(0, 20) + "..." : title;
     }
 
-    // 3. mapToAiChatResponse - أضيفي pinned
     private AiChatResponse mapToAiChatResponse(AiChat chat, User user, String aiAnswer) {
         return AiChatResponse.builder()
                 .id(chat.getId())
                 .title(chat.getTitle())
                 .status(chat.getStatus())
-                .pinned("PINNED".equals(chat.getStatus()))  // ← جديد
+                .pinned("PINNED".equals(chat.getStatus()))
                 .createdAt(chat.getCreatedAt())
                 .updatedAt(chat.getUpdatedAt())
                 .aiResponse(aiAnswer)

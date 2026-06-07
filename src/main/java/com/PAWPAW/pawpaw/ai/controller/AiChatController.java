@@ -2,8 +2,11 @@ package com.PAWPAW.pawpaw.ai.controller;
 
 import com.PAWPAW.pawpaw.ai.service.AiChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.Map;
 
 @RestController
@@ -26,12 +29,24 @@ public class AiChatController {
         return ResponseEntity.ok(aiChatService.getMyChats());
     }
 
-    // بعت رسالة في شات معين
+    // بعت رسالة نصية في شات معين
     @PostMapping("/{chatId}/messages")
     public ResponseEntity<?> sendMessage(
             @PathVariable Long chatId,
             @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(aiChatService.sendMessage(chatId, body.get("message")));
+    }
+
+    // ✅ جديد: بعت رسالة مع صورة → يعمل visual scan تلقائي
+    @PostMapping(value = "/{chatId}/scan-message", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> sendScanMessage(
+            @PathVariable Long chatId,
+            @RequestParam(value = "message", required = false) String message,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "imageUrl", required = false) String imageUrl) {
+        return ResponseEntity.ok(
+                aiChatService.sendMessageWithScan(chatId, message, file, imageUrl)
+        );
     }
 
     // جيب رسائل شات معين
