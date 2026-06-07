@@ -204,7 +204,7 @@ public class AiService {
         // Condition
         if (scan.isHasIssue()) {
             sb.append("⚠️ Detected Condition: ").append(scan.getIssueName())
-                    .append(String.format(" (%.1f%% confidence)\n", scan.getConfidence() * 100));
+                    .append(String.format(" (%.1f%% confidence)\n", scan.getConfidence()));
         } else {
             sb.append("✅ No significant health issues detected.\n");
         }
@@ -276,7 +276,7 @@ public class AiService {
         if (scan.isHasIssue()) {
             return String.format(
                     "🔍 Scan completed for %s.\n⚠️ Detected: %s (%.1f%% confidence).\nPlease consult a veterinarian for further examination.",
-                    scan.getBreedDetected(), scan.getIssueName(), scan.getConfidence() * 100
+                    scan.getBreedDetected(), scan.getIssueName(), scan.getConfidence()
             );
         }
         return String.format(
@@ -304,9 +304,12 @@ public class AiService {
         for (String key : keys) {
             if (node.has(key)) {
                 try {
-                    return Double.parseDouble(node.get(key).asText().replace("%", "").trim());
+                    double val = Double.parseDouble(node.get(key).asText().replace("%", "").trim());
+                    // لو القيمة أقل من 1 يبقي decimal → حولها لـ percentage
+                    return val <= 1.0 ? val * 100 : val;
                 } catch (Exception e) {
-                    return node.get(key).asDouble();
+                    double val = node.get(key).asDouble();
+                    return val <= 1.0 ? val * 100 : val;
                 }
             }
         }
